@@ -11,7 +11,7 @@ SCRIPT_PATH=$(readlink -f "${0}")
 SCRIPT_DIR=$(dirname "${SCRIPT_PATH}")
 
 # Prepare stuff
-source "${SCRIPT_DIR}"/../prepare/make_it_so.sh
+source "${SCRIPT_DIR}"/../prepare/make_it_so.envsh
 
 # We should only proceed at this time if we find an ECR URL
 if [[ "${AERIUS_REGISTRY_URL}" != *.ecr.*.amazonaws.com/* ]]; then
