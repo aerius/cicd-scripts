@@ -24,6 +24,7 @@ source "${SCRIPT_DIR}"/../prepare/make_it_so.envsh
 GIT_URL=$(git config remote.origin.url)
 
 # For PR's we will do some slight modifications
+# A PR for calculator will have a job name of "CALCULATOR-PR" (based on repository name) and the build number will be the PR ID
 if [[ -n "${PULLREQUEST_ID}" ]]; then
   JOB_NAME="${GIT_URL##*/}"
   JOB_NAME="${JOB_NAME%%.git}"
@@ -43,5 +44,6 @@ curl \
   --data DEPLOY_IMAGE_TAG="${AERIUS_IMAGE_TAG}" \
   ${SERVICE_TYPE:+--data SERVICE_TYPE="${SERVICE_TYPE}"} \
   ${SERVICE_THEME:+--data SERVICE_THEME="${SERVICE_THEME}"} \
-  ${AWS_ACCOUNT_NAME:--data AWS_ACCOUNT_NAME="${AWS_ACCOUNT_NAME}"} \
+  ${AWS_ACCOUNT_NAME:+--data AWS_ACCOUNT_NAME="${AWS_ACCOUNT_NAME}"} \
+  ${FLAGS:+--data FLAGS="${FLAGS}"} \
   "${DEPLOY_OTA_ENVIRONMENT_CICD_URL}"
