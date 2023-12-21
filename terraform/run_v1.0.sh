@@ -10,6 +10,9 @@ SCRIPT_DIR=$(dirname "${SCRIPT_PATH}")
 # Prepare stuff
 source "${SCRIPT_DIR}"/../prepare/make_it_so.envsh
 
+# Convenience vars
+FLAGS_DIRECTORY=resources/flags
+
 # Check whether the required vars are set
 : ${SOURCE_JOB_NAME?'SOURCE_JOB_NAME is required for this script to function'}
 : ${SOURCE_JOB_BUILD_NUMBER?'SOURCE_JOB_BUILD_NUMBER is required for this script to function'}
@@ -19,6 +22,7 @@ source "${SCRIPT_DIR}"/../prepare/make_it_so.envsh
 : ${DEPLOY_IMAGE_TAG?'DEPLOY_IMAGE_TAG is required for the script to function'}
 : ${SERVICE_TYPE?'SERVICE_TYPE is required for this script to function'}
 # SERVICE_THEME is optional, so we do not check on it
+# FLAGS is optional, so we do not check on it
 : ${AWS_ACCOUNT_NAME?'AWS_ACCOUNT_NAME is required for this script to function'}
 : ${DEPLOY_TERRAFORM_ACTION:=apply}
 
@@ -32,14 +36,14 @@ ENV_NAME="${SOURCE_JOB_NAME,,}"
 # Generate a short environment name
 # matches: *[year]*
 if [[ "${ENV_NAME_UPPERCASE}" =~ [0-9]{4} ]]; then
-  ENV_NAME_SHORT=$(echo "${ENV_NAME_UPPERCASE}" | sed -E 's#(.{3}).*([0-9]{4}.*)#\1\2#') # CALCULATOR1970-DEV becomes CAL1970-DEV
+  ENV_NAME_SHORT=$(sed -E 's#(.{3}).*([0-9]{4}.*)#\1\2#' <<< "${ENV_NAME_UPPERCASE}") # CALCULATOR1970-DEV becomes CAL1970-DEV
 # For PR's we'll do something else
 # matches: *-PR
 elif [[ "${ENV_NAME_UPPERCASE}" == *-PR ]]; then
-  ENV_NAME_SHORT=$(echo "${ENV_NAME_UPPERCASE}" | sed -E 's#(.{3}).*(-.*)#\1#')"-PR${SOURCE_JOB_BUILD_NUMBER}" # AERIUS-II-PR (with build number 119) becomes AER-PR119
+  ENV_NAME_SHORT=$(sed -E 's#(.{3}).*(-.*)#\1#' <<< "${ENV_NAME_UPPERCASE}")"-PR${SOURCE_JOB_BUILD_NUMBER}" # AERIUS-II-PR (with build number 119) becomes AER-PR119
 # Fallback
 else
-  ENV_NAME_SHORT=$(echo "${ENV_NAME_UPPERCASE}" | sed -E 's#(.{3}).*(-.*)#\1\2#') # CALCULATOR-DEV becomes CAL-DEV
+  ENV_NAME_SHORT=$(sed -E 's#(.{3}).*(-.*)#\1\2#' <<< "${ENV_NAME_UPPERCASE}") # CALCULATOR-DEV becomes CAL-DEV
 fi
 # Let's make an exception if it's PRERELEASE, we should shorten that part as well
 [[ "${ENV_NAME_SHORT}" == *-PRERELEASE ]] && ENV_NAME_SHORT="${ENV_NAME_SHORT//-PRERELEASE}-PRE"
@@ -50,7 +54,7 @@ DEPLOY_WEBHOST_TLD='nl'
 
 # If PR deploy, naming convention is a bit different
 [[ "${ENV_NAME_UPPERCASE}" == *-PR ]] && \
-  # AERIUS-II-PR (with buid number 119) becomes AERIUS-II-119
+  # CALCULATOR-PR (with build number 119) becomes CALCULATOR-119
   DEPLOY_WEBHOST_SUBDOMAIN="${ENV_NAME%%-pr}-${SOURCE_JOB_BUILD_NUMBER}" \
   DEPLOY_WEBHOST_DOMAIN='pr.aerius' \
   ENV_NAME="${ENV_NAME}${SOURCE_JOB_BUILD_NUMBER}" \
@@ -69,8 +73,11 @@ COGNITO_CALLBACK_DOMAIN="${DEPLOY_WEBHOST}"
 
 # Set some convenience variables
 ENV_ROOT_DIR="environments/${ENV_NAME}"
-ECR_REPO=$(cut -d '/' -f1 <<<"${AERIUS_REGISTRY_URL}")
-ECR_DIRECTORY=$(cut -d '/' -f2 <<<"${AERIUS_REGISTRY_URL}")
+ECR_REPO=$(cut -d '/' -f1 <<< "${AERIUS_REGISTRY_URL}")
+ECR_DIRECTORY=$(cut -d '/' -f2 <<< "${AERIUS_REGISTRY_URL}")
+PRODUCT_NAME=$(cut -d '/' -f2 <<< "${DEPLOY_GIT_URL}")
+PRODUCT_NAME="${PRODUCT_NAME%%.git}"
+PRODUCT_NAME="${PRODUCT_NAME##aerius-}" # Remove aerius- if it starts with that
 
 if [[ -d "${ENV_ROOT_DIR}" ]]; then
   echo '[terraform/run] # Environment directory "'"${ENV_ROOT_DIR}"'" already exists, quitting..'
@@ -122,23 +129,26 @@ locals {
     "type"  = "${SERVICE_TYPE}"
     "theme" = "${SERVICE_THEME}"
   }
-  environment             = "${ENV_NAME_UPPERCASE}"
-  environment_short       = "${ENV_NAME_SHORT}"
+  environment                 = "${ENV_NAME_UPPERCASE}"
+  environment_short           = "${ENV_NAME_SHORT}"
 
-  tf_bucket_key_prefix    = "environments/${ENV_NAME}/"
-  app_version             = "${DEPLOY_IMAGE_TAG}"
+  tf_bucket_key_prefix        = "environments/${ENV_NAME}/"
+  app_version                 = "${DEPLOY_IMAGE_TAG}"
 
-  ecr_repo                = "${ECR_REPO}"
-  ecr_directory           = "${ECR_DIRECTORY}"
+  ecr_repo                    = "${ECR_REPO}"
+  ecr_directory               = "${ECR_DIRECTORY}"
 
-  cognito_enabled         = true
-  cognito_user_pool_name  = "${COGNITO_USER_POOL_NAME}"
-  cognito_callback_domain = "${COGNITO_CALLBACK_DOMAIN}"
-
-  shared_basicinfra       = true
-  rds_count               = 0
+  shared_basicinfra           = true
+  rds_count                   = 0
+  ecs_disable_rolling_updates = true
 
 EOF
+
+declare -A FLAG_SETTINGS
+# Add some entries as flags, so they can be overridden if needed
+FLAG_SETTINGS[COGNITO_ENABLED]=true
+FLAG_SETTINGS[COGNITO_USER_POOL_NAME]="${COGNITO_USER_POOL_NAME}"
+FLAG_SETTINGS[COGNITO_CALLBACK_DOMAIN]="${COGNITO_CALLBACK_DOMAIN}"
 
 # If there is a product specific dynamic configuration, run it and add it environment.terragrunt.hcl
 PRODUCT_SPECIFIC_DYNAMIC_SCRIPT_DIR="${ENV_ROOT_DIR}/${AWS_REGION}/env.d"
@@ -151,12 +161,51 @@ if [[ -d "${PRODUCT_SPECIFIC_DYNAMIC_SCRIPT_DIR}" ]]; then
       && exit 1
 
     echo '[terraform/run] # Running product specific dynamic script: '"${PRODUCT_SPECIFIC_DYNAMIC_SCRIPT}"
-    echo '# Adding entries for: '"${PRODUCT_SPECIFIC_DYNAMIC_SCRIPT}" >> "${ENV_ROOT_DIR}/environment.terragrunt.hcl"
+    echo '  # Adding entries for: '"${PRODUCT_SPECIFIC_DYNAMIC_SCRIPT}" >> "${ENV_ROOT_DIR}/environment.terragrunt.hcl"
     ENV_NAME="${ENV_NAME}" \
     DEPLOY_WEBHOST="${DEPLOY_WEBHOST}" \
       ./"${PRODUCT_SPECIFIC_DYNAMIC_SCRIPT}" >> "${ENV_ROOT_DIR}/environment.terragrunt.hcl"
   done
 fi
+
+# Process flags specified
+for FLAG in $(echo "${FLAGS}" | tr ',' '\n'); do
+  # ignore empty flags
+  if [[ -z "${FLAG}" ]]; then
+    continue
+  fi
+
+  echo '# Processing flag: '"${FLAG}"
+  FLAG_PATH=
+  if [[ -f "${FLAGS_DIRECTORY}/${FLAG}.envsh" ]]; then
+    FLAG_PATH="${FLAGS_DIRECTORY}/${FLAG}.envsh"
+
+    echo '- Found as global flag.. Reading in..'
+    source "${FLAG_PATH}"
+  fi
+  if [[ -f "${FLAGS_DIRECTORY}/${PRODUCT_NAME}/${FLAG}.envsh" ]]; then
+    FLAG_PATH="${FLAGS_DIRECTORY}/${PRODUCT_NAME}/${FLAG}.envsh"
+
+    echo '- Found as product specific flag.. Reading in..'
+    source "${FLAG_PATH}"
+  fi
+
+  if [[ -z "${FLAG_PATH}" ]]; then
+    echo '# Could not find flag '"${FLAG}"'. Crashing hard..'
+    exit 1
+  fi
+done
+
+# Write flag settings to environment.terragrunt.hcl
+echo '  # Adding flag settings (if any)' >> "${ENV_ROOT_DIR}/environment.terragrunt.hcl"
+for FLAG_SETTING_KEY in "${!FLAG_SETTINGS[@]}"; do
+  FLAG_SETTING_VALUE="${FLAG_SETTINGS[$FLAG_SETTING_KEY]}"
+  # Use lowercase key for Terraform
+  FLAG_SETTINGS_KEY="${FLAG_SETTING_KEY,,}"
+
+  echo '# Adding flag setting: '"${FLAG_SETTINGS_KEY}"
+  echo "  ${FLAG_SETTINGS_KEY}"' = "'"${FLAG_SETTING_VALUE}"'"' >> "${ENV_ROOT_DIR}/environment.terragrunt.hcl"
+done
 
 # Write end of environment.terragrunt.hcl
 cat << EOF >> "${ENV_ROOT_DIR}/environment.terragrunt.hcl"
@@ -164,16 +213,19 @@ cat << EOF >> "${ENV_ROOT_DIR}/environment.terragrunt.hcl"
 EOF
 
 echo '# Actual files generated'
+echo '# modules.json'
 cat "${ENV_ROOT_DIR}/modules.json"
-echo
+echo '# region.terragrunt.hcl'
 cat "${ENV_ROOT_DIR}/region.terragrunt.hcl"
-echo
+echo '# account.terragrunt.hcl'
 cat "${ENV_ROOT_DIR}/account.terragrunt.hcl"
-echo
+echo '# environment.terragrunt.hcl'
 cat "${ENV_ROOT_DIR}/environment.terragrunt.hcl"
 
-# Do the real terragrunt action
-TERRAFORM_ENVIRONMENT="${ENV_NAME}" \
-TERRAFORM_ACTION="${DEPLOY_TERRAFORM_ACTION}" \
-TERRAFORM_COMPONENT=application_services \
-  scripts/do-terragrunt-action.sh
+# Do the real terragrunt action if it's not a dry run
+if [[ "${DEPLOY_TERRAFORM_ACTION}" != 'dry-run' ]]; then
+  TERRAFORM_ENVIRONMENT="${ENV_NAME}" \
+  TERRAFORM_ACTION="${DEPLOY_TERRAFORM_ACTION}" \
+  TERRAFORM_COMPONENT=application_services \
+    scripts/do-terragrunt-action.sh
+fi
