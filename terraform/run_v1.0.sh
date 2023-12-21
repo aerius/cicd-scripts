@@ -204,7 +204,15 @@ for FLAG_SETTING_KEY in "${!FLAG_SETTINGS[@]}"; do
   FLAG_SETTINGS_KEY="${FLAG_SETTING_KEY,,}"
 
   echo '# Adding flag setting: '"${FLAG_SETTINGS_KEY}"
-  echo "  ${FLAG_SETTINGS_KEY}"' = "'"${FLAG_SETTING_VALUE}"'"' >> "${ENV_ROOT_DIR}/environment.terragrunt.hcl"
+  # if multiline value, use heredoc
+  if [[ ${FLAG_SETTING_VALUE} == *$'\n'* ]]; then
+    echo "  ${FLAG_SETTINGS_KEY}"' = <<ENDOFVARIABLE
+'"${FLAG_SETTING_VALUE}"'
+ENDOFVARIABLE
+' >> "${ENV_ROOT_DIR}/environment.terragrunt.hcl"
+  else
+    echo "  ${FLAG_SETTINGS_KEY}"' = "'"${FLAG_SETTING_VALUE}"'"' >> "${ENV_ROOT_DIR}/environment.terragrunt.hcl"
+  fi
 done
 
 # Write end of environment.terragrunt.hcl
