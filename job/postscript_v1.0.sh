@@ -23,6 +23,11 @@ source "${SCRIPT_DIR}"/../prepare/make_it_so.envsh
 # The PR builder for example uses dynamic git URLs.
 GIT_URL=$(git config remote.origin.url)
 
+# Jobs starting with UK-, should use the UK account by default, if already set, that has precedence
+if [[ -z "${AWS_ACCOUNT_NAME}" ]] && [[ "${JOB_NAME}" == UK-* ]]; then
+  AWS_ACCOUNT_NAME='UK-DEV'
+fi
+
 # For PR's we will do some slight modifications
 # A PR for calculator will have a job name of "CALCULATOR-PR" (based on repository name) and the build number will be the PR ID
 if [[ -n "${PULLREQUEST_ID}" ]]; then
