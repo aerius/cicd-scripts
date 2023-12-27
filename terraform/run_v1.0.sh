@@ -51,6 +51,7 @@ fi
 DEPLOY_WEBHOST_SUBDOMAIN="${ENV_NAME}"
 DEPLOY_WEBHOST_DOMAIN='aerius'
 DEPLOY_WEBHOST_TLD='nl'
+APP_TIMEZONE='Europe/Amsterdam'
 
 # If PR deploy, naming convention is a bit different
 [[ "${ENV_NAME_UPPERCASE}" == *-PR ]] && \
@@ -68,7 +69,8 @@ COGNITO_USER_POOL_NAME=nl-dev-aerius
   && AWS_REGION=eu-west-2 \
   && DEPLOY_WEBHOST_TLD='uk' \
   && COGNITO_USER_POOL_NAME=uk-dev-aerius \
-  && DEPLOY_WEBHOST_SUBDOMAIN="${DEPLOY_WEBHOST_SUBDOMAIN##uk-}"
+  && DEPLOY_WEBHOST_SUBDOMAIN="${DEPLOY_WEBHOST_SUBDOMAIN##uk-}" \
+  && APP_TIMEZONE='Europe/London'
 DEPLOY_WEBHOST="${DEPLOY_WEBHOST_SUBDOMAIN}.${DEPLOY_WEBHOST_DOMAIN}.${DEPLOY_WEBHOST_TLD}"
 COGNITO_CALLBACK_DOMAIN="${DEPLOY_WEBHOST}"
 
@@ -135,6 +137,7 @@ locals {
 
   tf_bucket_key_prefix        = "environments/${ENV_NAME}/"
   app_version                 = "${DEPLOY_IMAGE_TAG}"
+  app_timezone                = "${APP_TIMEZONE}"
 
   ecr_repo                    = "${ECR_REPO}"
   ecr_directory               = "${ECR_DIRECTORY}"
