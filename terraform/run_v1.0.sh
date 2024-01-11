@@ -63,12 +63,14 @@ APP_TIMEZONE='Europe/Amsterdam'
 
 # Determine AWS region to deploy for based on AWS_ACCOUNT_NAME - defaults to eu-west-1
 # Also determine cognito settings and update TLD to use
-AWS_REGION=eu-west-1
-COGNITO_USER_POOL_NAME=nl-dev-aerius
+AWS_REGION='eu-west-1'
+COGNITO_USER_POOL_NAME='nl-dev-aerius'
+COGNITO_USER_POOL_DOMAIN='auth-dev.aerius.nl'
 [[ "${AWS_ACCOUNT_NAME}" == UK-* ]] \
-  && AWS_REGION=eu-west-2 \
+  && AWS_REGION='eu-west-2' \
   && DEPLOY_WEBHOST_TLD='uk' \
-  && COGNITO_USER_POOL_NAME=uk-dev-aerius \
+  && COGNITO_USER_POOL_NAME='uk-dev-aerius' \
+  && COGNITO_USER_POOL_DOMAIN='auth-dev.aerius.uk' \
   && DEPLOY_WEBHOST_SUBDOMAIN="${DEPLOY_WEBHOST_SUBDOMAIN##uk-}" \
   && APP_TIMEZONE='Europe/London'
 DEPLOY_WEBHOST="${DEPLOY_WEBHOST_SUBDOMAIN}.${DEPLOY_WEBHOST_DOMAIN}.${DEPLOY_WEBHOST_TLD}"
@@ -153,6 +155,7 @@ declare -A FLAG_SETTINGS
 FLAG_SETTINGS[COGNITO_ENABLED]=true
 FLAG_SETTINGS[COGNITO_USER_POOL_NAME]="${COGNITO_USER_POOL_NAME}"
 FLAG_SETTINGS[COGNITO_CALLBACK_DOMAIN]="${COGNITO_CALLBACK_DOMAIN}"
+FLAG_SETTINGS[COGNITO_USER_POOL_DOMAIN]="${COGNITO_USER_POOL_DOMAIN}"
 
 # If there is a product specific dynamic configuration, run it and add it environment.terragrunt.hcl
 PRODUCT_SPECIFIC_DYNAMIC_SCRIPT_DIR="${ENV_ROOT_DIR}/${AWS_REGION}/env.d"
