@@ -3,11 +3,16 @@
 # Exit on error
 set -e
 
-MESSAGE="${BUILD_DISPLAY_NAME}"
+MSG_TITLE="[${BUILD_DISPLAY_NAME^^}](${BUILD_URL})"
 if [[ "${JOB_NAME}" == 'DEPLOY-OTA-ENVIRONMENT' ]]; then
-  MESSAGE+=' [deploy]'
+  MSG_TITLE+=' [deploy]'
 else
-  MESSAGE+=' [build]'
+  MSG_TITLE+=' [build]'
 fi
 
-echo -n "${MESSAGE}"
+MSG_FOOTER=
+[[ -n "${REQUESTED_BY_USER}" ]] && MSG_FOOTER="CC: @${REQUESTED_BY_USER}"
+
+echo -n "${MSG_TITLE}
+The build finished with status \`${1}\` in \`${2%and counting}\`.
+${MSG_FOOTER}"
