@@ -6,6 +6,9 @@ set -e
 MSG_TITLE="[${BUILD_DISPLAY_NAME^^}](${BUILD_URL})"
 if [[ "${JOB_NAME}" == 'DEPLOY-OTA-ENVIRONMENT' ]]; then
   MSG_TITLE+=' [deploy]'
+  if [[ -n "${DEPLOY_TERRAFORM_ACTION}" ]] && [[ "${DEPLOY_TERRAFORM_ACTION}" != 'apply' ]]; then
+    MSG_TITLE+=' ['"${DEPLOY_TERRAFORM_ACTION}"']'
+  fi
 else
   MSG_TITLE+=' [build]'
 fi
