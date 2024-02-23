@@ -10,7 +10,7 @@ function notify_mattermost_message_add_label() {
 MSG_TITLE="[${BUILD_DISPLAY_NAME^^}](${BUILD_URL})"
 if [[ "${JOB_NAME}" == 'DEPLOY-OTA-ENVIRONMENT' ]]; then
   MSG_TITLE+=' '$(notify_mattermost_message_add_label 'deploy')
-  if [[ -n "${DEPLOY_TERRAFORM_ACTION}" ]] && [[ "${DEPLOY_TERRAFORM_ACTION}" != 'apply' ]]; then
+  if [[ -n "${DEPLOY_TERRAFORM_ACTION}" ]]; then
     MSG_TITLE+=' '$(notify_mattermost_message_add_label "${DEPLOY_TERRAFORM_ACTION}")
   fi
 else
