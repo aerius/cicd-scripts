@@ -3,14 +3,18 @@
 # Exit on error
 set -e
 
+function notify_mattermost_message_add_label() {
+  echo '![label_'"${1}"'](https://nexus.aerius.nl/repository/resources/images/label_'"${1}"'.png)'
+}
+
 MSG_TITLE="[${BUILD_DISPLAY_NAME^^}](${BUILD_URL})"
 if [[ "${JOB_NAME}" == 'DEPLOY-OTA-ENVIRONMENT' ]]; then
-  MSG_TITLE+=' [deploy]'
+  MSG_TITLE+=' '$(notify_mattermost_message_add_label 'deploy')
   if [[ -n "${DEPLOY_TERRAFORM_ACTION}" ]] && [[ "${DEPLOY_TERRAFORM_ACTION}" != 'apply' ]]; then
-    MSG_TITLE+=' ['"${DEPLOY_TERRAFORM_ACTION}"']'
+    MSG_TITLE+=' '$(notify_mattermost_message_add_label "${DEPLOY_TERRAFORM_ACTION}")
   fi
 else
-  MSG_TITLE+=' [build]'
+  MSG_TITLE+=' '$(notify_mattermost_message_add_label 'build')
 fi
 
 MSG_FOOTER=
