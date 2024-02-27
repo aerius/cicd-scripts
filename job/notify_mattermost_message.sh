@@ -4,7 +4,7 @@
 set -e
 
 function notify_mattermost_message_add_label() {
-  echo '![label_'"${1}"'](https://nexus.aerius.nl/repository/resources/images/label_'"${1}"'.png)'
+  echo '!['"${1}"'](https://nexus.aerius.nl/repository/resources/images/label_'"${1}"'.png)'
 }
 
 MSG_TITLE="[${BUILD_DISPLAY_NAME^^}](${BUILD_URL})"

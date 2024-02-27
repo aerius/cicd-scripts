@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+TEMP_FLAGS_RESOURCES_DIR=$(mktemp -d)
+"${CICD_SCRIPTS_DIR}"/common/git_checkout_efficient.sh "${TEMP_FLAGS_RESOURCES_DIR}" git@github.com:aerius/flags.git main
+
+function read_job_flags_cleanup() {
+  echo '# Cleaning up flags directory'
+  rm -rf "${TEMP_FLAGS_RESOURCES_DIR}"
+  unset -f read_job_flags_cleanup
+}
+
+# If array doesn't exist yet, create it
+if [[ -z "${FLAG_SETTINGS+x}" ]]; then
+    declare -A FLAG_SETTINGS
+fi
+
+# Process flags specified
+echo '# Reading in flags (if any)'
+for FLAG in $(echo "${FLAGS}" | tr ',' '\n'); do
+  # ignore empty flags
+  if [[ -z "${FLAG}" ]]; then
+    continue
+  fi
+
+  echo '# Processing flag: '"${FLAG}"
+  FLAG_PATH=
+  if [[ -f "${TEMP_FLAGS_RESOURCES_DIR}/${FLAG}.envsh" ]]; then
+    FLAG_PATH="${TEMP_FLAGS_RESOURCES_DIR}/${FLAG}.envsh"
+
+    echo '- Found as global flag.. Reading in..'
+  fi
+  if [[ -f "${TEMP_FLAGS_RESOURCES_DIR}/${PRODUCT_NAME}/${FLAG}.envsh" ]]; then
+    FLAG_PATH="${TEMP_FLAGS_RESOURCES_DIR}/${PRODUCT_NAME}/${FLAG}.envsh"
+
+    echo '- Found as product specific flag.. Reading in..'
+  fi
+
+  if [[ -z "${FLAG_PATH}" ]]; then
+    echo '# Could not find flag '"${FLAG}"'. Crashing hard..'
+    read_job_flags_cleanup
+    exit 1
+  fi
+
+  # Read in
+  source "${FLAG_PATH}"
+done
+
+# Cleaning up flags
+read_job_flags_cleanup

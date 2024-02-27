@@ -176,32 +176,7 @@ if [[ -d "${PRODUCT_SPECIFIC_DYNAMIC_SCRIPT_DIR}" ]]; then
 fi
 
 # Process flags specified
-for FLAG in $(echo "${FLAGS}" | tr ',' '\n'); do
-  # ignore empty flags
-  if [[ -z "${FLAG}" ]]; then
-    continue
-  fi
-
-  echo '# Processing flag: '"${FLAG}"
-  FLAG_PATH=
-  if [[ -f "${FLAGS_DIRECTORY}/${FLAG}.envsh" ]]; then
-    FLAG_PATH="${FLAGS_DIRECTORY}/${FLAG}.envsh"
-
-    echo '- Found as global flag.. Reading in..'
-    source "${FLAG_PATH}"
-  fi
-  if [[ -f "${FLAGS_DIRECTORY}/${PRODUCT_NAME}/${FLAG}.envsh" ]]; then
-    FLAG_PATH="${FLAGS_DIRECTORY}/${PRODUCT_NAME}/${FLAG}.envsh"
-
-    echo '- Found as product specific flag.. Reading in..'
-    source "${FLAG_PATH}"
-  fi
-
-  if [[ -z "${FLAG_PATH}" ]]; then
-    echo '# Could not find flag '"${FLAG}"'. Crashing hard..'
-    exit 1
-  fi
-done
+source "${SCRIPT_DIR}"/../common/read_job_flags.envsh
 
 # Write flag settings to environment.terragrunt.hcl
 echo '  # Adding flag settings (if any)' >> "${ENV_ROOT_DIR}/environment.terragrunt.hcl"
