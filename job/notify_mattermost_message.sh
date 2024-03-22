@@ -18,7 +18,7 @@ if [[ "${JOB_NAME}" == 'DEPLOY-OTA-ENVIRONMENT' ]]; then
   if [[ -n "${DEPLOY_TERRAFORM_ACTION}" ]]; then
     MSG_TITLE+=' '$(notify_mattermost_message_add_label "${DEPLOY_TERRAFORM_ACTION}")
   fi
-else if [[ "${JOB_NAME}" == 'QA-'* ]]; then
+elif [[ "${JOB_NAME}" == 'QA-'* ]]; then
   :
 else
   MSG_TITLE+=' '$(notify_mattermost_message_add_label 'build')
