@@ -28,11 +28,13 @@ for FLAG in $(echo "${FLAGS}" | tr ',' '\n'); do
     FLAG_PATH="${TEMP_FLAGS_RESOURCES_DIR}/${FLAG}.envsh"
 
     echo '- Found as global flag.. Reading in..'
+    source "${FLAG_PATH}"
   fi
   if [[ -f "${TEMP_FLAGS_RESOURCES_DIR}/${PRODUCT_NAME}/${FLAG}.envsh" ]]; then
     FLAG_PATH="${TEMP_FLAGS_RESOURCES_DIR}/${PRODUCT_NAME}/${FLAG}.envsh"
 
     echo '- Found as product specific flag.. Reading in..'
+    source "${FLAG_PATH}"
   fi
 
   if [[ -z "${FLAG_PATH}" ]]; then
@@ -40,9 +42,6 @@ for FLAG in $(echo "${FLAGS}" | tr ',' '\n'); do
     read_job_flags_cleanup
     exit 1
   fi
-
-  # Read in
-  source "${FLAG_PATH}"
 done
 
 # Cleaning up flags
