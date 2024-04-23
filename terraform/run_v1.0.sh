@@ -30,50 +30,46 @@ echo "[terraform/run] # Going to do a terraform build for: ${SOURCE_JOB_NAME} #$
 
 cd "${WORKSPACE}"
 
-ENV_NAME_UPPERCASE="${SOURCE_JOB_NAME}"
-ENV_NAME="${SOURCE_JOB_NAME,,}"
-
 # Generate a short environment name
 # matches: *[year]*
-if [[ "${ENV_NAME_UPPERCASE}" =~ [0-9]{4} ]]; then
-  ENV_NAME_SHORT=$(sed -E 's#(.{3}).*([0-9]{4}.*)#\1\2#' <<< "${ENV_NAME_UPPERCASE}") # CALCULATOR1970-DEV becomes CAL1970-DEV
+if [[ "${SOURCE_JOB_NAME}" =~ [0-9]{4} ]]; then
+  ENV_NAME_SHORT=$(sed -E 's#(.{3}).*([0-9]{4}.*)#\1\2#' <<< "${SOURCE_JOB_NAME}") # CALCULATOR1970-DEV becomes CAL1970-DEV
 # For PR's we'll do something else
 # matches: *-PR
-elif [[ "${ENV_NAME_UPPERCASE}" == *-PR ]]; then
-  ENV_NAME_SHORT=$(sed -E 's#(.{3}).*(-.*)#\1#' <<< "${ENV_NAME_UPPERCASE}")"-PR${SOURCE_JOB_BUILD_NUMBER}" # AERIUS-II-PR (with build number 119) becomes AER-PR119
+elif [[ "${SOURCE_JOB_NAME}" == *-PR ]]; then
+  ENV_NAME_SHORT=$(sed -E 's#(.{3}).*(-.*)#\1#' <<< "${SOURCE_JOB_NAME}")"-PR${SOURCE_JOB_BUILD_NUMBER}" # AERIUS-II-PR (with build number 119) becomes AER-PR119
 # Fallback
 else
-  ENV_NAME_SHORT=$(sed -E 's#(.{3}).*(-.*)#\1\2#' <<< "${ENV_NAME_UPPERCASE}") # CALCULATOR-DEV becomes CAL-DEV
+  ENV_NAME_SHORT=$(sed -E 's#(.{3}).*(-.*)#\1\2#' <<< "${SOURCE_JOB_NAME}") # CALCULATOR-DEV becomes CAL-DEV
 fi
 # Let's make an exception if it's PRERELEASE, we should shorten that part as well
 [[ "${ENV_NAME_SHORT}" == *-PRERELEASE ]] && ENV_NAME_SHORT="${ENV_NAME_SHORT//-PRERELEASE}-PRE"
 
-DEPLOY_WEBHOST_SUBDOMAIN="${ENV_NAME}"
-DEPLOY_WEBHOST_DOMAIN='aerius'
-DEPLOY_WEBHOST_TLD='nl'
+# Determine deploy webhost: DEPLOY_WEBHOST_SUBDOMAIN / DEPLOY_WEBHOST_DOMAIN / DEPLOY_WEBHOST_TLD / DEPLOY_WEBHOST
+source "${SCRIPT_DIR}"/../common/determine_deploy_webhost.envsh
+
+# Defaults
+ENV_NAME_UPPERCASE="${SOURCE_JOB_NAME}"
+ENV_NAME="${SOURCE_JOB_NAME,,}"
+AWS_REGION='eu-west-1'
+COGNITO_USER_POOL_NAME='nl-dev-aerius'
+COGNITO_USER_POOL_DOMAIN='auth-dev.aerius.nl'
 APP_TIMEZONE='Europe/Amsterdam'
 
 # If PR deploy, naming convention is a bit different
 [[ "${ENV_NAME_UPPERCASE}" == *-PR ]] && \
-  # CALCULATOR-PR (with build number 119) becomes CALCULATOR-119
-  DEPLOY_WEBHOST_SUBDOMAIN="${ENV_NAME%%-pr}-${SOURCE_JOB_BUILD_NUMBER}" \
-  DEPLOY_WEBHOST_DOMAIN='pr.aerius' \
+  # CALCULATOR-PR (with build number 119) becomes CALCULATOR-PR119
   ENV_NAME="${ENV_NAME}${SOURCE_JOB_BUILD_NUMBER}" \
   ENV_NAME_UPPERCASE="${ENV_NAME_UPPERCASE}${SOURCE_JOB_BUILD_NUMBER}"
 
-# Determine AWS region to deploy for based on AWS_ACCOUNT_NAME - defaults to eu-west-1
+# Determine AWS region to deploy for based on AWS_ACCOUNT_NAME
 # Also determine cognito settings and update TLD to use
-AWS_REGION='eu-west-1'
-COGNITO_USER_POOL_NAME='nl-dev-aerius'
-COGNITO_USER_POOL_DOMAIN='auth-dev.aerius.nl'
+# If UK deploy, we need to use other settings
 [[ "${AWS_ACCOUNT_NAME}" == UK-* ]] \
   && AWS_REGION='eu-west-2' \
-  && DEPLOY_WEBHOST_TLD='uk' \
   && COGNITO_USER_POOL_NAME='uk-dev-aerius' \
   && COGNITO_USER_POOL_DOMAIN='auth-dev.aerius.uk' \
-  && DEPLOY_WEBHOST_SUBDOMAIN="${DEPLOY_WEBHOST_SUBDOMAIN##uk-}" \
   && APP_TIMEZONE='Europe/London'
-DEPLOY_WEBHOST="${DEPLOY_WEBHOST_SUBDOMAIN}.${DEPLOY_WEBHOST_DOMAIN}.${DEPLOY_WEBHOST_TLD}"
 COGNITO_CALLBACK_DOMAIN="${DEPLOY_WEBHOST}"
 
 # Set some convenience variables

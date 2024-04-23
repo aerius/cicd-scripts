@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+# Check whether the required vars are set
+: ${SOURCE_JOB_NAME?'The required environment variable SOURCE_JOB_NAME is missing'}
+: ${SOURCE_JOB_BUILD_NUMBER?'The required environment variable SOURCE_JOB_BUILD_NUMBER is missing'}
+: ${AWS_ACCOUNT_NAME?'The required environment variable AWS_ACCOUNT_NAME is missing'}
+
+# defaults
+DEPLOY_WEBHOST_SUBDOMAIN="${SOURCE_JOB_NAME,,}"
+DEPLOY_WEBHOST_DOMAIN='aerius'
+DEPLOY_WEBHOST_TLD='nl'
+
+# If PR deploy, naming convention is a bit different
+[[ "${SOURCE_JOB_NAME}" == *-PR ]] && \
+  # CALCULATOR-PR (with build number 119) becomes calculator-119.pr
+  DEPLOY_WEBHOST_SUBDOMAIN="${DEPLOY_WEBHOST_SUBDOMAIN%%-pr}-${SOURCE_JOB_BUILD_NUMBER}.pr"
+
+# Determine AWS region to deploy for based on AWS_ACCOUNT_NAME - defaults to eu-west-1
+# Also determine cognito settings and update TLD to use
+[[ "${AWS_ACCOUNT_NAME}" == UK-* ]] \
+  && DEPLOY_WEBHOST_TLD='uk' \
+  && DEPLOY_WEBHOST_SUBDOMAIN="${DEPLOY_WEBHOST_SUBDOMAIN##uk-}"
+
+# The resulting full webhost
+DEPLOY_WEBHOST="${DEPLOY_WEBHOST_SUBDOMAIN}.${DEPLOY_WEBHOST_DOMAIN}.${DEPLOY_WEBHOST_TLD}"
