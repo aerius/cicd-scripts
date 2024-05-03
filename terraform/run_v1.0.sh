@@ -34,6 +34,9 @@ cd "${WORKSPACE}"
 # matches: *[year]*
 if [[ "${SOURCE_JOB_NAME}" =~ [0-9]{4} ]]; then
   ENV_NAME_SHORT=$(sed -E 's#(.{3}).*([0-9]{4}.*)#\1\2#' <<< "${SOURCE_JOB_NAME}") # CALCULATOR1970-DEV becomes CAL1970-DEV
+# matches: *-*-* (like register-opendata)
+elif [[ "${SOURCE_JOB_NAME}" == *-*-* ]]; then
+  ENV_NAME_SHORT=$(sed -E 's#(.{1}).*-(.{2}).*(-.*)#\1\2#' <<< "${SOURCE_JOB_NAME}") # REGISTER-OPENDATA-DEV becomes ROP-DEV
 # For PR's we'll do something else
 # matches: *-PR
 elif [[ "${SOURCE_JOB_NAME}" == *-PR ]]; then
