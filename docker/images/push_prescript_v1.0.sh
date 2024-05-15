@@ -1,23 +1,18 @@
 #!/usr/bin/env bash
 
-# This prescript is superseded by images_v*.sh, but is still there for backwards compatibility
-
 # Exit on error
 set -e
-
-# Tools needed for this script to function
-export CICD_SCRIPTS_TOOL_YQ=true
 
 # Record directory of script for convenience
 SCRIPT_PATH=$(readlink -f "${0}")
 SCRIPT_DIR=$(dirname "${SCRIPT_PATH}")
 
-# Prepare stuff
-source "${SCRIPT_DIR}"/../prepare/make_it_so.envsh
+# include functions
+source "${SCRIPT_DIR}"/functions_v1.0.sh
 
 # We should only proceed at this time if we find an ECR URL
 if [[ "${AERIUS_REGISTRY_URL}" != *.ecr.*.amazonaws.com/* ]]; then
-  echo '[docker/prescript] # Did not find an ECR URL, skipping the rest of the prescript'
+  echo '[docker/push_prescript] # Did not find an ECR URL, skipping the rest of the prescript'
   exit 0
 fi
 
@@ -55,19 +50,22 @@ REPOSITORY_LIFECYCLE_POLICY_TEXT='
 }
 '
 
+# Generate docker image policy file
+"${SCRIPT_DIR}"/aws_generate_docker_image_policy_file_v1.0.sh
+
 # Per Docker image being pushed to the registry do some magic
 while read DOCKER_IMAGE_NAME; do
-  echo "[docker/prescript] # Found image to be pushed: ${DOCKER_IMAGE_NAME}"
-  echo '[docker/prescript] # Creating Docker repository (this will fail if it already exists - which is fine)'
+  echo "[docker/push_prescript] # Found image to be pushed: ${DOCKER_IMAGE_NAME}"
+  echo '[docker/push_prescript] # Creating Docker repository (this will fail if it already exists - which is fine)'
   aws ecr create-repository --repository-name "${AERIUS_REGISTRY_PATH}/${DOCKER_IMAGE_NAME}" --image-tag-mutability IMMUTABLE || true
-  echo '[docker/prescript] # Setting permissions on repository'
+  echo '[docker/push_prescript] # Setting permissions on repository'
   aws ecr set-repository-policy --repository-name "${AERIUS_REGISTRY_PATH}/${DOCKER_IMAGE_NAME}" --policy-text file://"${SCRIPT_DIR}"/aws_generate_docker_image_policy_file.json
   # Only if repository matches known OTA-like names, set the policy (I'd rather have too many images than lose some by mistake)
   if [[ "${AERIUS_REGISTRY_PATH}" == ota/* ]] || [[ "${AERIUS_REGISTRY_PATH}" == temporary-custom/* ]]; then
-    echo '[docker/prescript] # Setting lifecycle-policy on repository'
+    echo '[docker/push_prescript] # Setting lifecycle-policy on repository'
     aws ecr put-lifecycle-policy --repository-name "${AERIUS_REGISTRY_PATH}/${DOCKER_IMAGE_NAME}" --lifecycle-policy-text "${REPOSITORY_LIFECYCLE_POLICY_TEXT}"
   else
-    echo '[docker/prescript] # WARNING: Skipping setting lifecycle-policy on repository as no OTA like path was detected'
+    echo '[docker/push_prescript] # WARNING: Skipping setting lifecycle-policy on repository as no OTA like path was detected'
   fi
 done < <(
   "${CICD_SCRIPTS_TOOLS_DIR}"/yq -r '.services[] | select( .image | contains("AERIUS_REGISTRY_URL") ) | .image | capture(".+AERIUS_REGISTRY_URL}(?P<image>.+):.+") | .image' "${DOCKER_COMPOSE_FILE}" |
