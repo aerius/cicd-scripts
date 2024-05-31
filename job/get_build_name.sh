@@ -8,6 +8,12 @@ if [[ -n "${PULLREQUEST_ID}" ]]; then
   : ${PULLREQUEST_REPOSITORY?'PULLREQUEST_REPOSITORY is required for this script to function'}
 
   echo -n "${PULLREQUEST_REPOSITORY^^} PR#${PULLREQUEST_ID}"
+elif [[ "${JOB_NAME}" == 'STIKSTOFJE-DEPLOY-OTA-ENVIRONMENT' ]]; then
+  # Check whether the required vars are set
+  : ${ENVIRONMENT_NAME?'ENVIRONMENT_NAME is required for this script to function'}
+  : ${BUILD_NUMBER?'BUILD_NUMBER is required for this script to function'}
+
+  echo -n "${ENVIRONMENT_NAME} #${BUILD_NUMBER}"
 elif [[ -z "${SOURCE_JOB_NAME}" ]]; then
   # Check whether the required vars are set
   : ${JOB_NAME?'JOB_NAME is required for this script to function'}
