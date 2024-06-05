@@ -36,7 +36,7 @@ if [[ -n "${PULLREQUEST_ID}" ]]; then
   JOB_NAME="${JOB_NAME^^}-PR"
 
   BUILD_NUMBER="${PULLREQUEST_ID}"
-# For our custom builds, use the proper environment name
+# For our custom temporary builds, use the proper environment name
 elif [[ "${JOB_NAME}" == 'STIKSTOFJE-DEPLOY-OTA-ENVIRONMENT' ]]; then
   JOB_NAME="${ENVIRONMENT_NAME}"
 fi
