@@ -78,7 +78,8 @@ COGNITO_CALLBACK_DOMAIN="${DEPLOY_WEBHOST}"
 # Set some convenience variables
 ENV_ROOT_DIR="environments/${ENV_NAME}"
 ECR_REPO=$(cut -d '/' -f1 <<< "${AERIUS_REGISTRY_URL}")
-ECR_DIRECTORY=$(cut -d '/' -f2 <<< "${AERIUS_REGISTRY_URL}")
+ECR_DIRECTORY=$(cut -d '/' -f2- <<< "${AERIUS_REGISTRY_URL}")
+ECR_DIRECTORY="${ECR_DIRECTORY%%/}" # Remove slash at end if any
 PRODUCT_NAME=$(cut -d '/' -f2 <<< "${DEPLOY_GIT_URL}")
 PRODUCT_NAME="${PRODUCT_NAME%%.git}"
 PRODUCT_NAME="${PRODUCT_NAME##aerius-}" # Remove aerius- if it starts with that
