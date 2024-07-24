@@ -25,7 +25,7 @@ else
 fi
 
 MSG_FOOTER=
-[[ -n "${REQUESTED_BY_USER}" ]] && MSG_FOOTER="CC: @${REQUESTED_BY_USER}"
+[[ -n "${REQUESTED_BY_USER}" ]] && MSG_FOOTER="CC: @${REQUESTED_BY_USER#@}"
 
 echo -n "${MSG_TITLE}
 The build finished with status \`${1}\` in \`${2%and counting}\`.
