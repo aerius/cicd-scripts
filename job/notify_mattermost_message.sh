@@ -25,7 +25,12 @@ else
 fi
 
 MSG_FOOTER=
-[[ -n "${REQUESTED_BY_USER}" ]] && MSG_FOOTER="CC: @${REQUESTED_BY_USER#@}"
+if [[ -n "${REQUESTED_BY_USER}" ]]; then
+  REQUESTED_BY_USER="${REQUESTED_BY_USER#@}"
+  # Add @ after comma, if it is missing
+  REQUESTED_BY_USER=$(sed -E 's/,([a-zA-Z])/,@\1/g'<<<"${REQUESTED_BY_USER}")
+  MSG_FOOTER="CC: @${REQUESTED_BY_USER}"
+fi
 
 echo -n "${MSG_TITLE}
 The build finished with status \`${1}\` in \`${2%and counting}\`.
