@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 
-TEMP_FLAGS_RESOURCES_DIR=$(mktemp -d)
-"${CICD_SCRIPTS_DIR}"/common/git_checkout_efficient.sh "${TEMP_FLAGS_RESOURCES_DIR}" git@github.com:aerius/flags.git main
+FLAGS_RESOURCES_DIR=$(mktemp -d)
+"${CICD_SCRIPTS_DIR}"/common/git_checkout_efficient.sh "${FLAGS_RESOURCES_DIR}" git@github.com:aerius/flags.git main
 
 function read_job_flags_cleanup() {
   echo '# Cleaning up flags directory'
-  rm -rf "${TEMP_FLAGS_RESOURCES_DIR}"
+  rm -rf "${FLAGS_RESOURCES_DIR}"
   unset -f read_job_flags_cleanup
+  unset -v FLAGS_RESOURCES_DIR
 }
 
 # If array doesn't exist yet, create it
@@ -24,14 +25,14 @@ for FLAG in $(echo "${FLAGS}" | tr ',' '\n'); do
 
   echo '# Processing flag: '"${FLAG}"
   FLAG_PATH=
-  if [[ -f "${TEMP_FLAGS_RESOURCES_DIR}/${FLAG}.envsh" ]]; then
-    FLAG_PATH="${TEMP_FLAGS_RESOURCES_DIR}/${FLAG}.envsh"
+  if [[ -f "${FLAGS_RESOURCES_DIR}/${FLAG}.envsh" ]]; then
+    FLAG_PATH="${FLAGS_RESOURCES_DIR}/${FLAG}.envsh"
 
     echo '- Found as global flag.. Reading in..'
     source "${FLAG_PATH}"
   fi
-  if [[ -f "${TEMP_FLAGS_RESOURCES_DIR}/${PRODUCT_NAME}/${FLAG}.envsh" ]]; then
-    FLAG_PATH="${TEMP_FLAGS_RESOURCES_DIR}/${PRODUCT_NAME}/${FLAG}.envsh"
+  if [[ -f "${FLAGS_RESOURCES_DIR}/${PRODUCT_NAME}/${FLAG}.envsh" ]]; then
+    FLAG_PATH="${FLAGS_RESOURCES_DIR}/${PRODUCT_NAME}/${FLAG}.envsh"
 
     echo '- Found as product specific flag.. Reading in..'
     source "${FLAG_PATH}"

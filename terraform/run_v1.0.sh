@@ -10,9 +10,6 @@ SCRIPT_DIR=$(dirname "${SCRIPT_PATH}")
 # Prepare stuff
 source "${SCRIPT_DIR}"/../prepare/make_it_so.envsh
 
-# Convenience vars
-FLAGS_DIRECTORY=resources/flags
-
 # Check whether the required vars are set
 : ${SOURCE_JOB_NAME?'SOURCE_JOB_NAME is required for this script to function'}
 : ${SOURCE_JOB_BUILD_NUMBER?'SOURCE_JOB_BUILD_NUMBER is required for this script to function'}
