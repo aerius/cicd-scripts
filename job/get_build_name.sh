@@ -29,4 +29,4 @@ else
 fi
 
 # if terraform action executed is not apply add it to the build name to make it stand out
-[[ -n "${DEPLOY_TERRAFORM_ACTION}" && "${DEPLOY_TERRAFORM_ACTION}" != 'apply' ]] && echo -n " [${DEPLOY_TERRAFORM_ACTION^^}]" || true
+[[ -n "${DEPLOY_TERRAFORM_ACTION}" && "${DEPLOY_TERRAFORM_ACTION}" != 'apply' ]] && echo -n " [${DEPLOY_TERRAFORM_ACTION}]" || true
