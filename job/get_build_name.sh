@@ -28,5 +28,5 @@ else
   echo -n "${SOURCE_JOB_NAME^^} #${SOURCE_JOB_BUILD_NUMBER}"
 fi
 
-# if terraform action executed is destroy add it to the build name
-[[ "${DEPLOY_TERRAFORM_ACTION}" == 'destroy' ]] && echo -n ' [DESTROY]' || true
+# if terraform action executed is not apply add it to the build name to make it stand out
+[[ -n "${DEPLOY_TERRAFORM_ACTION}" && "${DEPLOY_TERRAFORM_ACTION}" != 'apply' ]] && echo -n " [${DEPLOY_TERRAFORM_ACTION^^}]" || true
