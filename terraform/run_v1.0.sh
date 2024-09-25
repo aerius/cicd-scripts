@@ -194,7 +194,7 @@ ENDOFVARIABLE
   # Format will be: %% RAWVALUE <my RAW value> %%
   # You will be responsible for the exact formatting used,
   #  so please think twice about what you are about to do and then think again for good measure.
-  elif [[ ${FLAG_SETTING_VALUE} == '%% RAWVALUE '* ]] && [[ ${FLAG_SETTING_VALUE} == ' %%' ]]; then
+  elif [[ ${FLAG_SETTING_VALUE} == '%% RAWVALUE '* ]] && [[ ${FLAG_SETTING_VALUE} == *' %%' ]]; then
     FLAG_SETTING_VALUE="${FLAG_SETTING_VALUE#'%% RAWVALUE '}"
     FLAG_SETTING_VALUE="${FLAG_SETTING_VALUE%' %%'}"
     echo "  ${FLAG_SETTINGS_KEY}"' = '"${FLAG_SETTING_VALUE}" >> "${ENV_ROOT_DIR}/environment.terragrunt.hcl"
