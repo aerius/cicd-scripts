@@ -37,7 +37,7 @@ fi
 while read DOCKER_IMAGE_NAME; do
   echo "[docker/prescript] # Found image to be pushed: ${DOCKER_IMAGE_NAME}"
   echo '[docker/prescript] # Creating Docker repository (this will fail if it already exists - which is fine)'
-  aws ecr create-repository --repository-name "${AERIUS_REGISTRY_PATH}/${DOCKER_IMAGE_NAME}" || true
+  aws ecr create-repository --repository-name "${AERIUS_REGISTRY_PATH}/${DOCKER_IMAGE_NAME}" --image-tag-mutability IMMUTABLE || true
   echo '[docker/prescript] # Setting permissions on repository'
   aws ecr set-repository-policy --repository-name "${AERIUS_REGISTRY_PATH}/${DOCKER_IMAGE_NAME}" --policy-text file://"${SCRIPT_DIR}"/aws_generate_docker_image_policy_file.json || true
 done < <(
