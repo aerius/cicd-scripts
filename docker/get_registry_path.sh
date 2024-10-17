@@ -17,5 +17,5 @@ else
   # Check whether the required JOB_BASE_NAME is set
   : ${JOB_BASE_NAME?'JOB_BASE_NAME is required for this script to function'}
 
-  echo -n "${JOB_BASE_NAME,,}"
+  echo -n "ota/${JOB_BASE_NAME,,}"
 fi
