@@ -23,11 +23,6 @@ source "${SCRIPT_DIR}"/../prepare/make_it_so.envsh
 # The PR builder for example uses dynamic git URLs.
 GIT_URL=$(git config remote.origin.url)
 
-# Jobs starting with UK-, should use the UK account by default, if already set, that has precedence
-if [[ -z "${AWS_ACCOUNT_NAME}" ]] && [[ "${JOB_NAME}" == UK-* ]]; then
-  AWS_ACCOUNT_NAME='UK-DEV'
-fi
-
 # For PR's we will do some slight modifications
 # A PR for calculator will have a job name of "CALCULATOR-PR" (based on repository name) and the build number will be the PR ID
 if [[ -n "${PULLREQUEST_ID}" ]]; then
@@ -39,6 +34,11 @@ if [[ -n "${PULLREQUEST_ID}" ]]; then
 # For our custom temporary builds, use the proper environment name
 elif [[ "${JOB_NAME}" == 'STIKSTOFJE-DEPLOY-OTA-ENVIRONMENT' ]]; then
   JOB_NAME="${ENVIRONMENT_NAME}"
+fi
+
+# Jobs starting with UK-, should use the UK account by default, if already set, that has precedence
+if [[ -z "${AWS_ACCOUNT_NAME}" ]] && [[ "${JOB_NAME}" == UK-* ]]; then
+  AWS_ACCOUNT_NAME='UK-DEV'
 fi
 
 # Trigger CICD to do the deploy
