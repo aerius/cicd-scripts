@@ -142,7 +142,6 @@ locals {
   ecr_directory               = "${ECR_DIRECTORY}"
 
   shared_basicinfra           = true
-  rds_count                   = 0
   ecs_disable_rolling_updates = true
 
 EOF
@@ -154,6 +153,7 @@ FLAG_SETTINGS[COGNITO_USER_POOL_NAME]="${COGNITO_USER_POOL_NAME}"
 FLAG_SETTINGS[COGNITO_CALLBACK_DOMAIN]="${COGNITO_CALLBACK_DOMAIN}"
 FLAG_SETTINGS[COGNITO_USER_POOL_DOMAIN]="${COGNITO_USER_POOL_DOMAIN}"
 FLAG_SETTINGS[SCALE_BASED_ON_CRON]=false
+FLAG_SETTINGS[RDS_COUNT]=0
 
 # If there is a product specific dynamic configuration, run it and add it environment.terragrunt.hcl
 PRODUCT_SPECIFIC_DYNAMIC_SCRIPT_DIR="${ENV_ROOT_DIR}/${AWS_REGION}/env.d"
