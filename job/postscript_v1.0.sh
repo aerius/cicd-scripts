@@ -41,6 +41,11 @@ if [[ -z "${AWS_ACCOUNT_NAME}" ]] && [[ "${JOB_NAME}" == UK-* ]]; then
   AWS_ACCOUNT_NAME='UK-DEV'
 fi
 
+# If REQUESTED_BY_USER is not set and the job is triggered by a user, use this as the requester
+if [[ -z "${REQUESTED_BY_USER}" ]] && [[ -n "${BUILD_USER_ID}" ]] && [[ "${BUILD_USER_ID}" != 'ota-environment-deploy' ]]; then
+  REQUESTED_BY_USER="${BUILD_USER_ID}"
+fi
+
 # Trigger CICD to do the deploy
 curl \
   --user "${DEPLOY_OTA_ENVIRONMENT_CICD_LOGIN}" \
