@@ -35,5 +35,5 @@ if [[ -n "${REQUESTED_BY_USER}" ]]; then
 fi
 
 echo -n "${MSG_TITLE}
-The ${MSG_ACTION} finished with status \`${1}\` in \`${2%and counting}\`.
+The \`${MSG_ACTION}\` finished with status \`${1}\` in \`${2%and counting}\`.
 ${MSG_FOOTER}"
