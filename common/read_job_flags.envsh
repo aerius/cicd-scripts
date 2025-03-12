@@ -24,24 +24,51 @@ for FLAG in $(echo "${FLAGS}" | tr ',' '\n'); do
   fi
 
   echo '# Processing flag: '"${FLAG}"
-  FLAG_PATH=
-  if [[ -f "${FLAGS_RESOURCES_DIR}/${FLAG}.envsh" ]]; then
-    FLAG_PATH="${FLAGS_RESOURCES_DIR}/${FLAG}.envsh"
+  # If flag contains one slash, it's a dynamic flag
+  if [[ "${FLAG}" =~ ^[A-Z0-9_\-]+/[A-Z0-9_\-]+$ ]]; then
+    echo '- Dynamic flag detected, reading from SSM..'
+    IFS='/' read FLAG_ENV_NAME FLAG_ENV_ENTRY <<< "${FLAG,,}"
+    ENTRIES=$(aws --profile "${AWS_ACCOUNT_NAME,,}" ssm describe-parameters --output text --query 'Parameters[*].Name' --filter 'Key=Name,Values=/'"${FLAG_ENV_NAME,,}"'/flags/'"${FLAG_ENV_ENTRY,,}"'/' | sed 's/\t/ /g')
+    if [[ -z "${ENTRIES}" ]]; then
+      echo '# Could not find dynamic flag '"${FLAG}"'.. Crashing hard..'
+      read_job_flags_cleanup
+      exit 1
+    fi
+    ENTRIES_ARRAY=(${ENTRIES})
+    ENTRIES_TOTAL="${#ENTRIES_ARRAY[@]}"
+    ENTRIES_READ=0
+    while read ENTRY_NAME ENTRY_VALUE; do
+      ENTRIES_READ=$((ENTRIES_READ + 1))
+      echo '- Reading in: '"${ENTRY_NAME}"
+      ENTRY_NAME="${ENTRY_NAME##*/}"
+      FLAG_SETTINGS[${ENTRY_NAME}]="${ENTRY_VALUE}"
+    # Yes, the entries var isn't escaped, as a list is expected by this command
+    done < <(aws --profile "${AWS_ACCOUNT_NAME,,}" ssm get-parameters --output text --with-decryption --query 'Parameters[*].[Name, Value]' --names ${ENTRIES})
+    if (( ENTRIES_TOTAL != ENTRIES_READ )); then
+      echo '# Expected '"${ENTRIES_TOTAL}"' entries to be read in, but '"${ENTRIES_READ}"' were read in'
+      exit 1
+    fi
+  # Else it's a file-based flag
+  else
+    FLAG_PATH=
+    if [[ -f "${FLAGS_RESOURCES_DIR}/${FLAG}.envsh" ]]; then
+      FLAG_PATH="${FLAGS_RESOURCES_DIR}/${FLAG}.envsh"
 
-    echo '- Found as global flag.. Reading in..'
-    source "${FLAG_PATH}"
-  fi
-  if [[ -f "${FLAGS_RESOURCES_DIR}/${PRODUCT_NAME}/${FLAG}.envsh" ]]; then
-    FLAG_PATH="${FLAGS_RESOURCES_DIR}/${PRODUCT_NAME}/${FLAG}.envsh"
+      echo '- Found as global flag.. Reading in..'
+      source "${FLAG_PATH}"
+    fi
+    if [[ -f "${FLAGS_RESOURCES_DIR}/${PRODUCT_NAME}/${FLAG}.envsh" ]]; then
+      FLAG_PATH="${FLAGS_RESOURCES_DIR}/${PRODUCT_NAME}/${FLAG}.envsh"
 
-    echo '- Found as product specific flag.. Reading in..'
-    source "${FLAG_PATH}"
-  fi
+      echo '- Found as product specific flag.. Reading in..'
+      source "${FLAG_PATH}"
+    fi
 
-  if [[ -z "${FLAG_PATH}" ]]; then
-    echo '# Could not find flag '"${FLAG}"'. Crashing hard..'
-    read_job_flags_cleanup
-    exit 1
+    if [[ -z "${FLAG_PATH}" ]]; then
+      echo '# Could not find flag '"${FLAG}"'. Crashing hard..'
+      read_job_flags_cleanup
+      exit 1
+    fi
   fi
 done
 
