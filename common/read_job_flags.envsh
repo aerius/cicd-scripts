@@ -41,7 +41,7 @@ for FLAG in $(echo "${FLAGS}" | tr ',' '\n'); do
       ENTRIES_READ=$((ENTRIES_READ + 1))
       echo '- Reading in: '"${ENTRY_NAME}"
       ENTRY_NAME="${ENTRY_NAME##*/}"
-      FLAG_SETTINGS[${ENTRY_NAME}]="${ENTRY_VALUE}"
+      FLAG_SETTINGS[${ENTRY_NAME^^}]="${ENTRY_VALUE}"
     # Yes, the entries var isn't escaped, as a list is expected by this command
     done < <(aws --profile "${AWS_ACCOUNT_NAME,,}" ssm get-parameters --output text --with-decryption --query 'Parameters[*].[Name, Value]' --names ${ENTRIES})
     if (( ENTRIES_TOTAL != ENTRIES_READ )); then
