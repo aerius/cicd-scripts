@@ -18,8 +18,8 @@ fi
 # Process flags specified
 echo '# Reading in flags (if any)'
 for FLAG in $(echo "${FLAGS}" | tr ',' '\n'); do
-  # ignore empty flags
-  if [[ -z "${FLAG}" ]]; then
+  # ignore empty and build flags
+  if [[ -z "${FLAG}" || "${FLAG}" == 'BUILD_'* ]]; then
     continue
   fi
 
