@@ -13,7 +13,7 @@ SCRIPT_DIR=$(dirname "${SCRIPT_PATH}")
 DOCKER_IMAGE_POLICY_FILE="${SCRIPT_DIR}"/aws_generate_docker_image_policy_file.json
 cat << EOF > "${DOCKER_IMAGE_POLICY_FILE}"
 {
-  "Version": "2008-10-17",
+  "Version": "2012-10-17",
   "Statement": [
     {
       "Sid": "AllowPull",
