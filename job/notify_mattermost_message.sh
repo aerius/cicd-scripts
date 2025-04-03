@@ -27,10 +27,12 @@ else
 fi
 
 MSG_FOOTER=
-if [[ "${MSG_ACTION}" == 'apply' ]] && [[ "${1}" == 'SUCCESS' ]]; then
-  ENVIRONMENT_URL="https://${JOB_NAME}.aerius.nl"
-  [[ "${JOB_NAME}" == 'UK-'* ]] && ENVIRONMENT_URL="https://${JOB_NAME#UK-}.aerius.uk"
-  MSG_FOOTER+="[Click to go to this environment](${ENVIRONMENT_URL,,})\n"
+if [[ "${BUILD_DISPLAY_NAME}" == *' '* ]] && [[ "${MSG_ACTION}" == 'apply' ]] && [[ "${1}" == 'SUCCESS' ]]; then
+  CUSTOM_JOB_NAME="${BUILD_DISPLAY_NAME%% *}"
+  ENVIRONMENT_URL="https://${CUSTOM_JOB_NAME}.aerius.nl"
+  [[ "${CUSTOM_JOB_NAME}" == 'UK-'* ]] && ENVIRONMENT_URL="https://${CUSTOM_JOB_NAME#UK-}.aerius.uk"
+  MSG_FOOTER+="[Click to go to this environment](${ENVIRONMENT_URL,,})
+"
 fi
 if [[ -n "${REQUESTED_BY_USER}" ]]; then
   REQUESTED_BY_USER="${REQUESTED_BY_USER#@}"
