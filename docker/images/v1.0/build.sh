@@ -8,7 +8,7 @@ SCRIPT_PATH=$(readlink -f "${0}")
 SCRIPT_DIR=$(dirname "${SCRIPT_PATH}")
 
 # include functions
-source "${SCRIPT_DIR}"/functions_v1.0.sh
+source "${SCRIPT_DIR}"/functions.sh
 
 # Set variables we will re-use multiple times
 PROFILE_PATH="${GENERATED_DIRECTORY}/${CUSTOM_PROFILE_FILENAME}"

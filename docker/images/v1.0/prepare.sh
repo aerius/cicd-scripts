@@ -8,7 +8,7 @@ SCRIPT_PATH=$(readlink -f "${0}")
 SCRIPT_DIR=$(dirname "${SCRIPT_PATH}")
 
 # include functions
-source "${SCRIPT_DIR}"/functions_v1.0.sh
+source "${SCRIPT_DIR}"/functions.sh
 
 # Read in CICD config if it exists
 _cicd_read_in_config
@@ -108,4 +108,4 @@ echo
 
 # Process Dockerfile templates
 echo '# Executing images_process_dockerfile_templates.sh'
-"${SCRIPT_DIR}"/process_dockerfile_templates_v1.0.sh
+"${SCRIPT_DIR}"/process_dockerfile_templates.sh

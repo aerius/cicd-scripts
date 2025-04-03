@@ -8,7 +8,7 @@ SCRIPT_PATH=$(readlink -f "${0}")
 SCRIPT_DIR=$(dirname "${SCRIPT_PATH}")
 
 # include functions
-source "${SCRIPT_DIR}"/functions_v1.0.sh
+source "${SCRIPT_DIR}"/functions.sh
 
 # We should only proceed at this time if we find an ECR URL
 if [[ "${AERIUS_REGISTRY_URL}" != *.ecr.*.amazonaws.com/* ]]; then
@@ -51,7 +51,7 @@ REPOSITORY_LIFECYCLE_POLICY_TEXT='
 '
 
 # Generate docker image policy file
-"${SCRIPT_DIR}"/aws_generate_docker_image_policy_file_v1.0.sh
+"${SCRIPT_DIR}"/aws_generate_docker_image_policy_file.sh
 
 # Per Docker image being pushed to the registry do some magic
 while read DOCKER_IMAGE_NAME; do
