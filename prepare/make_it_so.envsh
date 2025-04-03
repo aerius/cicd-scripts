@@ -10,10 +10,12 @@ pushd "${SCRIPT_DIR}"
 
 # Tool versions
 export CICD_SCRIPTS_YQ_VERSION=v4.34.1
+export CICD_SCRIPTS_DOCKER_COMPOSE_VERSION=v2.27.0
 
 # Go to root of repository
 cd ..
 export CICD_SCRIPTS_TOOLS_DIR=$(pwd)/.bin
+declare -p CICD_SCRIPTS_TOOLS_DIR > "${CICD_SCRIPTS_DIR}"/set_cicd_scripts_tools_dir.envsh
 
 # Create tools directory if needed
 mkdir -p "${CICD_SCRIPTS_TOOLS_DIR}"
@@ -21,7 +23,8 @@ mkdir -p "${CICD_SCRIPTS_TOOLS_DIR}"
 # Go back to the prepare directory
 cd prepare
 # Install tools
-[[ "${CICD_SCRIPTS_TOOL_YQ}" == 'true' ]] && ./prepare-install-jq.sh
+[[ "${CICD_SCRIPTS_TOOL_DOCKER_COMPOSE}" == 'true' ]] && ./prepare-install-docker-compose.sh
+[[ "${CICD_SCRIPTS_TOOL_YQ}" == 'true' ]]             && ./prepare-install-yq.sh
 
 # Pro tip: add CICD_SCRIPTS_TOOLS_DIR to your PATH - well, for security reasons might want to directly call these binaries instead, but yeah.
 # Do what feels okay to you.

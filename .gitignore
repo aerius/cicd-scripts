@@ -1,2 +1,4 @@
 # Ignore tools directory
 .bin
+# This is generated when the prescript is run and shouldn't be included in version control
+set_cicd_scripts_tools_dir.envsh
