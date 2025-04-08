@@ -49,13 +49,13 @@ fi
 #####################
 
 # Dump processed docker-compose.yaml
-echo '# Dump processed docker-compose.yaml'
+_cicd_log '# Dump processed docker-compose.yaml'
 "${CICD_SCRIPTS_TOOLS_DIR}"/docker-compose -f "${DOCKER_COMPOSE_ORIGINAL_PATH}" --project-directory "${GENERATED_DIRECTORY}" config > "${DOCKER_COMPOSE_PATH}"
 echo
 
 cat "${DOCKER_COMPOSE_PATH}"
 # Build images
-echo '# Building images'
+_cicd_log '# Building images'
 CICD_COMPOSE_EXTRA_ARGS=()
 [[ "${CICD_SUPPLY_HTTPS_DATA}" == 'true' ]] && CICD_COMPOSE_EXTRA_ARGS+=('--build-arg' 'HTTPS_DATA_USERNAME='"${HTTPS_DATA_USERNAME}" '--build-arg' 'HTTPS_DATA_PASSWORD='"${HTTPS_DATA_PASSWORD}")
 "${CICD_SCRIPTS_TOOLS_DIR}"/docker-compose -f "${DOCKER_COMPOSE_PATH}" --project-directory "${GENERATED_DIRECTORY}" build --pull --parallel ${CICD_COMPOSE_EXTRA_ARGS[@]}

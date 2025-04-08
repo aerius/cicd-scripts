@@ -15,16 +15,28 @@ CUSTOM_PROFILE_FILENAME='custom.profile'
 # function to print error and exit
 # $1 = error message
 function _cicd_error() {
-  echo '[ERROR] - '"${1}"
+  echo '[CICD-ERROR]['$(date +'%H:%M:%S')'] - '"${1}"
   exit 1
 }
 
+# function to log a message
+# $1 = message to log
+function _cicd_log() {
+  echo '[CICD-INFO]['$(date +'%H:%M:%S')'] - '"${1}"
+}
+
+
 # function to check if a module is enabled
 # $1 = contains modules that are enabled separated by space or empty/not set which means all modules are enabled
-# $2 = module to check for
+# $2 = module(s) to check for, multiple can be provided by using spaces
 function _cicd_is_module_enabled() {
-  [[ -z "${1}" ]] || [[ "${1}" == *" ${2} "* ]]
-  return $?
+  [[ -z "${1}" ]] && return 0
+
+  for module in ${2}; do
+    [[ "${1}" == *" ${module} "* ]] && return 0
+  done
+
+  return 1
 }
 
 # function to copy a block of yaml into the resulting yaml
@@ -42,9 +54,9 @@ function _cicd_copy_yaml_block_into() {
 
 function _cicd_read_in_config() {
   if [[ -f .cicd_scripts_config ]]; then
-    echo '[CICD] Reading in CICD config found in current directory'
+    _cicd_log 'Reading in CICD config found in current directory'
     source .cicd_scripts_config
   else
-    echo '[CICD] No CICD config found.. Using defaults..'
+    _cicd_log 'No CICD config found.. Using defaults..'
   fi
 }

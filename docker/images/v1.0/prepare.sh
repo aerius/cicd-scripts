@@ -52,7 +52,7 @@ rm -vf "${GENERATED_DIRECTORY}"/*
 
 # If no profile is specified no processing is needed
 if [[ -z "${PROFILE}" ]]; then
-  echo '# Going to prepare service theme "'"${SERVICE_THEME}"'" with no profile'
+  _cicd_log '# Going to prepare service theme "'"${SERVICE_THEME}"'" with no profile'
 
   # Simply copy over the docker-compose.yaml
   cp "${FROM_DOCKER_COMPOSE_PATH}" "${DOCKER_COMPOSE_PATH}"
@@ -60,12 +60,12 @@ if [[ -z "${PROFILE}" ]]; then
   # Fetch all services from docker-compose.yaml
   ALL_SERVICES=$("${CICD_SCRIPTS_TOOLS_DIR}"/yq '.services | keys | join(" ")' "${FROM_DOCKER_COMPOSE_PATH}")
   # Execute copy_dependencies for service theme
-  echo '# Executing copy_dependencies.sh for theme'
+  _cicd_log '# Executing copy_dependencies.sh for theme'
   ./"${SERVICE_THEME}"/copy_dependencies.sh " ${ALL_SERVICES} "
   echo
 # Else a profile is specified and we need to do some processing
 else
-  echo '# Going to generate custom theme based on theme "'"${SERVICE_THEME}"'" and profile "'"${PROFILE}"'"'
+  _cicd_log '# Going to generate custom theme based on theme "'"${SERVICE_THEME}"'" and profile "'"${PROFILE}"'"'
 
   # Read in profile
   PROFILE_PATH="${SERVICE_THEME}/profiles/${PROFILE}.profile"
@@ -78,34 +78,34 @@ else
   cp "${PROFILE_PATH}" "${GENERATED_DIRECTORY}/${CUSTOM_PROFILE_FILENAME}"
 
   # Generate docker-compose.yaml based on the services
-  echo '- Generating '"${DOCKER_COMPOSE_PATH}"
+  _cicd_log '- Generating '"${DOCKER_COMPOSE_PATH}"
 
   # Add header to new file
   COMPOSE_HEADER_VERSION=$("${CICD_SCRIPTS_TOOLS_DIR}"/yq '.version' "${FROM_DOCKER_COMPOSE_PATH}")
   "${CICD_SCRIPTS_TOOLS_DIR}"/yq -n '.version = "'"${COMPOSE_HEADER_VERSION}"'"' > "${DOCKER_COMPOSE_PATH}"
   # Per service copy it into the docker-compose.yaml
   for SERVICE in "${SERVICES[@]}"; do
-    echo '- Processing service: '"${SERVICE}"
+    _cicd_log '- Processing service: '"${SERVICE}"
     _cicd_copy_yaml_block_into "${DOCKER_COMPOSE_PATH}" "${FROM_DOCKER_COMPOSE_PATH}" 'services' "${SERVICE}"
   done
   # Per volume copy it into the docker-compose.yaml
   for VOLUME in "${VOLUMES[@]}"; do
-    echo '- Processing volume: '"${VOLUME}"
+    _cicd_log '- Processing volume: '"${VOLUME}"
     _cicd_copy_yaml_block_into "${DOCKER_COMPOSE_PATH}" "${FROM_DOCKER_COMPOSE_PATH}" 'volumes' "${VOLUME}"
   done
   echo
 
   # Execute copy_dependencies for theme
-  echo '# Executing copy_dependencies.sh for theme'
+  _cicd_log '# Executing copy_dependencies.sh for theme'
   ./"${SERVICE_THEME}"/copy_dependencies.sh " ${SERVICES[*]} "
   echo
 fi
 
 # Copy .env from service theme
-echo '# Copying .env from service theme'
+_cicd_log '# Copying .env from service theme'
 cp "${SERVICE_THEME}"/.env "${GENERATED_DIRECTORY}"/
 echo
 
 # Process Dockerfile templates
-echo '# Executing images_process_dockerfile_templates.sh'
+_cicd_log '# Executing images_process_dockerfile_templates.sh'
 "${SCRIPT_DIR}"/process_dockerfile_templates.sh
