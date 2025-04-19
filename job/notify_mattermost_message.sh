@@ -3,6 +3,10 @@
 # Exit on error
 set -e
 
+# Record directory of script for convenience
+SCRIPT_PATH=$(readlink -f "${0}")
+SCRIPT_DIR=$(dirname "${SCRIPT_PATH}")
+
 function notify_mattermost_message_add_label() {
   echo '!['"${1}"'](https://nexus.aerius.nl/repository/resources/images/label_'"${1}"'.png)'
 }
@@ -26,6 +30,27 @@ else
   MSG_TITLE+=' '$(notify_mattermost_message_add_label 'build')
 fi
 
+MSG_DURATIONS=
+if [[ -n "${3}" ]]; then
+  # Add the current job to the durations as well
+  CICD_JOB_DURATIONS=$("${SCRIPT_DIR}"/add_job_duration.sh "${3}" "${2%and counting}")
+  MSG_DURATIONS+='```
+'
+  while read -d ';' JOB_DURATION_TYPE JOB_DURATION; do
+    MSG_DURATIONS+=$(printf '%-8s job took %s' "${JOB_DURATION_TYPE^}" "${JOB_DURATION}")
+    MSG_DURATIONS+='
+'
+  done <<< "${CICD_JOB_DURATIONS};"
+
+  MSG_DURATIONS+='```
+'
+  [[ "${1}" != 'SUCCESS' ]] && MSG_DURATIONS+="Job finished with status \`${1}\`
+"
+# We use the fallback message if it's an older one
+else
+  MSG_DURATIONS+="The \`${MSG_ACTION}\` finished with status \`${1}\` in \`${2%and counting}\`"
+fi
+
 MSG_FOOTER=
 if [[ "${BUILD_DISPLAY_NAME}" == *' '* ]] && [[ "${MSG_ACTION}" == 'apply' ]] && [[ "${1}" == 'SUCCESS' ]]; then
   CUSTOM_JOB_NAME="${BUILD_DISPLAY_NAME%% *}"
@@ -42,5 +67,5 @@ if [[ -n "${REQUESTED_BY_USER}" ]]; then
 fi
 
 echo -n "${MSG_TITLE}
-The \`${MSG_ACTION}\` finished with status \`${1}\` in \`${2%and counting}\`.
+${MSG_DURATIONS}
 ${MSG_FOOTER}"
