@@ -30,27 +30,36 @@ else
   MSG_TITLE+=' '$(notify_mattermost_message_add_label 'build')
 fi
 
-MSG_DURATIONS=
-if [[ -n "${3}" ]]; then
-  # Add the current job to the durations as well
-  CICD_JOB_DURATIONS=$("${SCRIPT_DIR}"/add_job_duration.sh "${3}" "${2%and counting}")
-  MSG_DURATIONS+='```
+MSG_JOB_MESSAGES=
+if [[ -n "${CICD_JOB_MESSAGES}" ]]; then
+  # Add the current job to the durations as well if specified
+  [[ -n "${3}" ]] && CICD_JOB_MESSAGES=$("${SCRIPT_DIR}"/add_job_duration.sh "${3}" "${2%and counting}")
+  MSG_JOB_MESSAGES+='```
 '
-  while read -d ';' JOB_DURATION_TYPE JOB_DURATION; do
-    MSG_DURATIONS+=$(printf '%-8s job took %s' "${JOB_DURATION_TYPE^}" "${JOB_DURATION}")
-    MSG_DURATIONS+='
+  while read -d ';' MSG_TYPE MSG_CONTENT; do
+    case "${MSG_TYPE,,}" in
+      message)
+        MSG_JOB_MESSAGES+="${MSG_CONTENT}"'
 '
-  done <<< "${CICD_JOB_DURATIONS};"
+        ;;
+      jobduration)
+        read JOB_DURATION_TYPE JOB_DURATION <<< "${MSG_CONTENT}"
+        MSG_JOB_MESSAGES+=$(printf '%-8s job took %s' "${JOB_DURATION_TYPE^}" "${JOB_DURATION}")'
+'
+        ;;
+    esac
+  done <<< "${CICD_JOB_MESSAGES};"
 
-  MSG_DURATIONS+='```
+  MSG_JOB_MESSAGES+='```
 '
-  [[ "${1}" != 'SUCCESS' ]] && MSG_DURATIONS+="Job finished with status \`${1}\`
+  [[ "${1}" != 'SUCCESS' ]] && MSG_JOB_MESSAGES+="Job finished with status \`${1}\`
 "
 # We use the fallback message if it's an older one
 else
-  MSG_DURATIONS+="The \`${MSG_ACTION}\` finished with status \`${1}\` in \`${2%and counting}\`"
+  MSG_JOB_MESSAGES+="The \`${MSG_ACTION}\` finished with status \`${1}\` in \`${2%and counting}\`"
 fi
 
+echo "${MSG_JOB_MESSAGES}"
 MSG_FOOTER=
 if [[ "${BUILD_DISPLAY_NAME}" == *' '* ]] && [[ "${MSG_ACTION}" == 'apply' ]] && [[ "${1}" == 'SUCCESS' ]]; then
   CUSTOM_JOB_NAME="${BUILD_DISPLAY_NAME%% *}"
@@ -67,5 +76,5 @@ if [[ -n "${REQUESTED_BY_USER}" ]]; then
 fi
 
 echo -n "${MSG_TITLE}
-${MSG_DURATIONS}
+${MSG_JOB_MESSAGES}
 ${MSG_FOOTER}"
