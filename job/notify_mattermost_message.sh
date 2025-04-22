@@ -59,7 +59,6 @@ else
   MSG_JOB_MESSAGES+="The \`${MSG_ACTION}\` finished with status \`${1}\` in \`${2%and counting}\`"
 fi
 
-echo "${MSG_JOB_MESSAGES}"
 MSG_FOOTER=
 if [[ "${BUILD_DISPLAY_NAME}" == *' '* ]] && [[ "${MSG_ACTION}" == 'apply' ]] && [[ "${1}" == 'SUCCESS' ]]; then
   CUSTOM_JOB_NAME="${BUILD_DISPLAY_NAME%% *}"
