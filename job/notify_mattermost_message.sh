@@ -31,7 +31,7 @@ else
 fi
 
 MSG_JOB_MESSAGES=
-if [[ -n "${CICD_JOB_MESSAGES}" ]]; then
+if [[ -n "${CICD_JOB_MESSAGES}" || -n "${3}" ]]; then
   # Add the current job to the durations as well if specified
   [[ -n "${3}" ]] && CICD_JOB_MESSAGES=$("${SCRIPT_DIR}"/add_job_duration.sh "${3}" "${2%and counting}")
   MSG_JOB_MESSAGES+='```
