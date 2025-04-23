@@ -52,7 +52,7 @@ if [[ -n "${CICD_JOB_MESSAGES}" ]]; then
 
   MSG_JOB_MESSAGES+='```
 '
-  [[ "${1}" != 'SUCCESS' ]] && MSG_JOB_MESSAGES+="Job finished with status \`${1}\`
+  [[ "${1}" != 'SUCCESS' && "${1}" != 'UNSTABLE' ]] && MSG_JOB_MESSAGES+="Job finished with status \`${1}\`
 "
 # We use the fallback message if it's an older one
 else
