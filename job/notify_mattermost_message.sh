@@ -60,7 +60,10 @@ else
 fi
 
 MSG_FOOTER=
+[[ -n "${BUILD_USER_ID}" ]] && [[ "${BUILD_USER_ID}" != 'ota-environment-deploy' ]] && MSG_FOOTER+="Job was manually triggered by @${BUILD_USER_ID}
+"
 if [[ "${BUILD_DISPLAY_NAME}" == *' '* ]] && [[ "${MSG_ACTION}" == 'apply' ]] && [[ "${1}" == 'SUCCESS' ]]; then
+
   CUSTOM_JOB_NAME="${BUILD_DISPLAY_NAME%% *}"
   ENVIRONMENT_URL="https://${CUSTOM_JOB_NAME}.aerius.nl"
   [[ "${CUSTOM_JOB_NAME}" == 'UK-'* ]] && ENVIRONMENT_URL="https://${CUSTOM_JOB_NAME#UK-}.aerius.uk"
