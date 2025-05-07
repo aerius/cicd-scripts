@@ -27,8 +27,14 @@ _cicd_read_in_config
 ! [[ "${SERVICE_THEME}" =~ ^[[:alnum:]-]*$ ]] && _cicd_error 'SERVICE_THEME contains bad characters'
 ! [[ "${PROFILE}" =~ ^[[:alnum:]-]*$ ]] && _cicd_error 'PROFILE contains bad characters'
 
-# Check if service theme exists
-! [[ -d "${SERVICE_THEME}" ]] && _cicd_error 'Service theme "'"${SERVICE_THEME}"'" not found.'
+# Check if service theme exists (allow for both uppercase and lowercase)
+if [[ -d "${SERVICE_THEME^^}" ]]; then
+  SERVICE_THEME="${SERVICE_THEME^^}"
+elif [[ -d "${SERVICE_THEME,,}" ]]; then
+  SERVICE_THEME="${SERVICE_THEME,,}"
+else
+  _cicd_error 'Service theme "'"${SERVICE_THEME}"'" not found.'
+fi
 
 # Check if profile exists for theme if specified
 ! [[ -z "${PROFILE}" || -f "${SERVICE_THEME}/profiles/${PROFILE}.profile" ]] && _cicd_error 'Profile "'"${PROFILE}"'" does not exist for theme "'"${SERVICE_THEME}"'"'
