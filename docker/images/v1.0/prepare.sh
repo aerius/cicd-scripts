@@ -27,6 +27,11 @@ _cicd_read_in_config
 ! [[ "${SERVICE_THEME}" =~ ^[[:alnum:],-]+$ ]] && _cicd_error 'SERVICE_THEME contains bad characters: '"${SERVICE_THEME}"
 ! [[ "${PROFILE}" =~ ^[[:alnum:]-]*$ ]] && _cicd_error 'PROFILE contains bad characters: '"${PROFILE}"
 
+# If SERVICE_THEME has multiple themes, first one is the leading one
+if [[ ${SERVICE_THEME} == *','* ]]; then
+  SERVICE_THEME="${SERVICE_THEME%%,*}"
+fi
+
 # Check if service theme exists (allow for both uppercase and lowercase)
 if [[ -d "${SERVICE_THEME^^}" ]]; then
   SERVICE_THEME="${SERVICE_THEME^^}"
@@ -43,10 +48,6 @@ fi
 ### The real deal ###
 #####################
 
-# If SERVICE_THEME has multiple themes, first one is the leading one
-if [[ ${SERVICE_THEME} == *','* ]]; then
-  SERVICE_THEME="${SERVICE_THEME%%,*}"
-fi
 
 DOCKER_COMPOSE_PATH="${GENERATED_DIRECTORY}"/docker-compose-original.yaml
 FROM_DOCKER_COMPOSE_PATH="${SERVICE_THEME}"/docker-compose.yaml
