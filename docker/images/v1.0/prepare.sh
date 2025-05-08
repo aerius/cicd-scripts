@@ -24,8 +24,8 @@ _cicd_read_in_config
 [[ -z "${SERVICE_THEME}" ]] && _cicd_error 'SERVICE_THEME is required'
 
 # Do format checks
-! [[ "${SERVICE_THEME}" =~ ^[[:alnum:]-,]*$ ]] && _cicd_error 'SERVICE_THEME contains bad characters'
-! [[ "${PROFILE}" =~ ^[[:alnum:]-]*$ ]] && _cicd_error 'PROFILE contains bad characters'
+! [[ "${SERVICE_THEME}" =~ ^[[:alnum:]-,]*$ ]] && _cicd_error 'SERVICE_THEME contains bad characters: '"${SERVICE_THEME}"
+! [[ "${PROFILE}" =~ ^[[:alnum:]-]*$ ]] && _cicd_error 'PROFILE contains bad characters: '"${PROFILE}"
 
 # Check if service theme exists (allow for both uppercase and lowercase)
 if [[ -d "${SERVICE_THEME^^}" ]]; then
