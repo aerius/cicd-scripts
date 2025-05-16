@@ -3,7 +3,7 @@
 RESULT=''
 for FLAG in $(echo "${FLAGS}" | tr ',' '\n'); do
   if [[ "${FLAG}" == 'TEST_'* ]]; then
-    RESULT+=",${FLAG}"
+    RESULT+=",${FLAG#TEST_}"
   fi
 done
 
