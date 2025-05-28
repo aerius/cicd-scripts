@@ -62,8 +62,8 @@ else
 fi
 
 MSG_FOOTER=
-if [[ "${JOB_NAME}" == 'QA-GENERIC' ]]; then
-  MSG_FOOTER+="[Click to go to the Test result page](${BUILD_URL}testReport/)
+if [[ "${JOB_NAME}" == 'QA-'* ]] && [[ "${1}" == 'SUCCESS' || "${1}" == 'UNSTABLE' ]]; then
+  MSG_FOOTER+="[Click to go to the unittest results page](${BUILD_URL}testReport/)
 "
   MSG_FOOTER+="[Click to go to this Cucumber reports page](${BUILD_URL}cucumber-html-reports/)
 "
