@@ -24,6 +24,8 @@ if [[ "${JOB_NAME}" == 'DEPLOY-OTA-ENVIRONMENT' ]]; then
 #    MSG_TITLE+=' '$(notify_mattermost_message_add_label "${DEPLOY_TERRAFORM_ACTION}")
     MSG_ACTION="${DEPLOY_TERRAFORM_ACTION}"
   fi
+elif [[ "${JOB_NAME}" == 'QA-GENERIC' ]]; then
+  MSG_TITLE="[QA-run on ${SOURCE_JOB_NAME}](${BUILD_URL})"
 elif [[ "${JOB_NAME}" == 'QA-'* ]]; then
   :
 else
@@ -60,10 +62,15 @@ else
 fi
 
 MSG_FOOTER=
+if [[ "${JOB_NAME}" == 'QA-GENERIC' ]]; then
+  MSG_FOOTER+="[Click to go to the Test result page](${BUILD_URL}testReport/)
+"
+  MSG_FOOTER+="[Click to go to this Cucumber reports page](${BUILD_URL}cucumber-html-reports/)
+"
+fi
 [[ -n "${BUILD_USER_ID}" ]] && [[ ' ota-environment-deploy timer ' != *" ${BUILD_USER_ID} "* ]] && MSG_FOOTER+="Job was manually triggered by @${BUILD_USER_ID}
 "
 if [[ "${BUILD_DISPLAY_NAME}" == *' '* ]] && [[ "${MSG_ACTION}" == 'apply' ]] && [[ "${1}" == 'SUCCESS' ]]; then
-
   CUSTOM_JOB_NAME="${BUILD_DISPLAY_NAME%% *}"
   ENVIRONMENT_URL="https://${CUSTOM_JOB_NAME}.aerius.nl"
   [[ "${CUSTOM_JOB_NAME}" == 'UK-'* ]] && ENVIRONMENT_URL="https://${CUSTOM_JOB_NAME#UK-}.aerius.uk"
