@@ -25,7 +25,7 @@ if [[ "${JOB_NAME}" == 'DEPLOY-OTA-ENVIRONMENT' ]]; then
     MSG_ACTION="${DEPLOY_TERRAFORM_ACTION}"
   fi
 elif [[ "${JOB_NAME}" == 'QA-GENERIC' ]]; then
-  MSG_TITLE="[QA-run on ${SOURCE_JOB_NAME}](${BUILD_URL})"
+  MSG_TITLE="[Manual QA-run on ${SOURCE_JOB_NAME}](${BUILD_URL})"
 elif [[ "${JOB_NAME}" == 'QA-'* ]]; then
   :
 else
