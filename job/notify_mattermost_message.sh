@@ -65,7 +65,7 @@ MSG_FOOTER=
 if [[ "${JOB_NAME}" == 'QA-'* ]] && [[ "${1}" == 'SUCCESS' || "${1}" == 'UNSTABLE' ]]; then
   MSG_FOOTER+="[Click to go to the unittest results page](${BUILD_URL}testReport/)
 "
-  MSG_FOOTER+="[Click to go to this Cucumber reports page](${BUILD_URL}cucumber-html-reports/)
+  MSG_FOOTER+="[Click to go to the Cucumber reports page](${BUILD_URL}cucumber-html-reports/)
 "
 fi
 [[ -n "${BUILD_USER_ID}" ]] && [[ ' ota-environment-deploy timer ' != *" ${BUILD_USER_ID} "* ]] && MSG_FOOTER+="Job was manually triggered by @${BUILD_USER_ID}
