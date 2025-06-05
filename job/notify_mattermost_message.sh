@@ -17,7 +17,7 @@ MSG_ICONS=
 MSG_ACTION='build'
 
 function notify_mattermost_message_add_msg_icon() {
-  MSG_ICONS+="[:${1}:](${2})"
+  MSG_ICONS+="[:${1}:](${2}) "
 }
 
 # If BUILD_DISPLAY_NAME contains a space, it's a custom one, use that instead
