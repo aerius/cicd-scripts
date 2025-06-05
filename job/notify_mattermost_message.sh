@@ -13,7 +13,12 @@ function notify_mattermost_message_add_label() {
 
 # Default title and action
 MSG_TITLE="[${JOB_NAME} ${BUILD_DISPLAY_NAME}](${BUILD_URL})"
+MSG_ICONS=
 MSG_ACTION='build'
+
+function notify_mattermost_message_add_msg_icon() {
+  MSG_ICONS+="[:${1}:](${2})"
+}
 
 # If BUILD_DISPLAY_NAME contains a space, it's a custom one, use that instead
 [[ "${BUILD_DISPLAY_NAME}" == *' '* ]] && MSG_TITLE="[${BUILD_DISPLAY_NAME^^}](${BUILD_URL})"
@@ -62,20 +67,13 @@ else
 fi
 
 MSG_FOOTER=
-if [[ "${JOB_NAME}" == 'QA-'* ]] && [[ "${1}" == 'SUCCESS' || "${1}" == 'UNSTABLE' ]]; then
-  MSG_FOOTER+="[Click to go to the unittest results page](${BUILD_URL}testReport/)
-"
-  MSG_FOOTER+="[Click to go to the Cucumber reports page](${BUILD_URL}cucumber-html-reports/)
-"
-fi
 [[ -n "${BUILD_USER_ID}" ]] && [[ ' ota-environment-deploy timer ' != *" ${BUILD_USER_ID} "* ]] && MSG_FOOTER+="Job was manually triggered by @${BUILD_USER_ID}
 "
 if [[ "${BUILD_DISPLAY_NAME}" == *' '* ]] && [[ "${MSG_ACTION}" == 'apply' ]] && [[ "${1}" == 'SUCCESS' ]]; then
   CUSTOM_JOB_NAME="${BUILD_DISPLAY_NAME%% *}"
   ENVIRONMENT_URL="https://${CUSTOM_JOB_NAME}.aerius.nl"
   [[ "${CUSTOM_JOB_NAME}" == 'UK-'* ]] && ENVIRONMENT_URL="https://${CUSTOM_JOB_NAME#UK-}.aerius.uk"
-  MSG_FOOTER+="[Click to go to this environment](${ENVIRONMENT_URL,,})
-"
+  notify_mattermost_message_add_msg_icon 'aerius' "${ENVIRONMENT_URL,,}"
 fi
 if [[ -n "${REQUESTED_BY_USER}" ]]; then
   REQUESTED_BY_USER="${REQUESTED_BY_USER#@}"
@@ -83,7 +81,11 @@ if [[ -n "${REQUESTED_BY_USER}" ]]; then
   REQUESTED_BY_USER=$(sed -E 's/,([a-zA-Z])/,@\1/g'<<<"${REQUESTED_BY_USER}")
   MSG_FOOTER+="CC: @${REQUESTED_BY_USER}"
 fi
+if [[ "${JOB_NAME}" == 'QA-'* ]] && [[ "${1}" == 'SUCCESS' || "${1}" == 'UNSTABLE' ]]; then
+  notify_mattermost_message_add_msg_icon 'java' "${BUILD_URL}testReport/"
+  notify_mattermost_message_add_msg_icon 'cucumber_reports' "${BUILD_URL}cucumber-html-reports/"
+fi
 
-echo -n "${MSG_TITLE}
+echo -n "${MSG_TITLE} ${MSG_ICONS}
 ${MSG_JOB_MESSAGES}
 ${MSG_FOOTER}"
