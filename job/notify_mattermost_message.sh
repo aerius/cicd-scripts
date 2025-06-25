@@ -89,3 +89,14 @@ fi
 echo -n "${MSG_TITLE} ${MSG_ICONS}
 ${MSG_JOB_MESSAGES}
 ${MSG_FOOTER}"
+
+# If QA job and we have a post hook URL, do let them know.
+# We do that here, that for whatever reason output is included from this part,
+#  it will be appended to the end instead of breaking the title
+if [[ "${JOB_NAME}" == 'QA-'* ]] && [[ -n "${CICD_SCRIPTS_JOB_POST_HOOK_URL}" ]]; then
+  curl \
+    -H 'Content-Type: application/json' \
+    --request POST \
+    --data '{"build_number":"'"${BUILD_NUMBER}"'","job_name":"'"${JOB_NAME}"'","state":"'"${1}"'"}' \
+    "${CICD_SCRIPTS_JOB_POST_HOOK_URL}" &> /dev/null
+fi
