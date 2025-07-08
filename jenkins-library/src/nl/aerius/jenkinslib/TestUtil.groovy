@@ -5,6 +5,7 @@ import hudson.tasks.test.AbstractTestResultAction
 def static getFailedCypressCount(AbstractTestResultAction testResultAction) {
     def failCypress = 0
     for (failedTest in testResultAction.getFailedTests()) {
+        // This matches both testcontainers and native Cypress tests at this time
         if (failedTest.getFullName().contains('.cypress.')) {
             failCypress++
         }
@@ -14,13 +15,10 @@ def static getFailedCypressCount(AbstractTestResultAction testResultAction) {
 
 def static getPrettyDiff(def current, def previous) {
     if (previous == null) {
-        return current
+        return sprintf('%6d', current)
     } else {
-        if (previous > current) {
-            return "${current} (${current - previous})"
-        } else {
-            return "${current} (+${current - previous})"
-        }
+        def delta = previous > current ? "(${current - previous})" : "(+${current - previous})"
+        return sprintf('%6d %6s', current, delta)
     }
 }
 
@@ -52,7 +50,13 @@ def static getTestStatusMessage(def currentBuild) {
         }
 
         if (failed > 0 || (previousResult != null && failedPrevious > 0)) {
-          testStatus = "Failed: ${getPrettyDiff(failed, failedPrevious)}\n  Cypress: ${getPrettyDiff(failedCypress, failedCypressPrevious)}\n  Unittests: ${getPrettyDiff(failedUnittests, failedUnittestsPrevious)}\nPassed: ${getPrettyDiff(passed, passedPrevious)}\nSkipped: ${getPrettyDiff(skipped, skippedPrevious)}"
+          testStatus = """\
+            Failed      ${getPrettyDiff(failed, failedPrevious)}
+            - Cypress   ${getPrettyDiff(failedCypress, failedCypressPrevious)}
+            - Unittests ${getPrettyDiff(failedUnittests, failedUnittestsPrevious)}
+            Passed      ${getPrettyDiff(passed, passedPrevious)}
+            Skipped     ${getPrettyDiff(skipped, skippedPrevious)}
+            """.stripIndent()
         }
     }
     return testStatus
