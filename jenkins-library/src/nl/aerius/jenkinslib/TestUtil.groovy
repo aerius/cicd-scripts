@@ -14,7 +14,7 @@ def static getFailedCypressCount(AbstractTestResultAction testResultAction) {
 }
 
 def static getPrettyDiff(def current, def previous) {
-    if (previous == null) {
+    if (previous == null || current == previous) {
         return sprintf('%6d', current)
     } else {
         def delta = previous > current ? "(${current - previous})" : "(+${current - previous})"
