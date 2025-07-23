@@ -60,7 +60,7 @@ if [[ -n "${CICD_JOB_MESSAGES}" || -n "${3}" ]]; then
   MSG_JOB_MESSAGES+='```
 '
   [[ "${1}" == 'ABORTED' ]] && MSG_JOB_MESSAGES+="Job was aborted"
-  [[ "${1}" == 'FAILURE' ]] && MSG_JOB_MESSAGES+="Job crashed in stage \`${CICD_LAST_STARTED_STAGE:-Unknown}\` :facepalm:"
+  [[ "${1}" == 'FAILURE' ]] && MSG_JOB_MESSAGES+='Job [crashed](https://i.pinimg.com/736x/dc/e6/84/dce684bfe637d609fe271d17e0a07d36.jpg) in stage `'"${CICD_LAST_STARTED_STAGE:-Unknown}"'`'
 # We use the fallback message if it's an older one
 else
   MSG_JOB_MESSAGES+="The \`${MSG_ACTION}\` finished with status \`${1}\` in \`${2%and counting}\`"
