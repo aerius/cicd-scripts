@@ -79,7 +79,10 @@ if [[ -n "${REQUESTED_BY_USER}" ]]; then
   REQUESTED_BY_USER="${REQUESTED_BY_USER#@}"
   # Add @ after comma, if it is missing
   REQUESTED_BY_USER=$(sed -E 's/,([a-zA-Z])/,@\1/g'<<<"${REQUESTED_BY_USER}")
-  MSG_FOOTER+="CC: @${REQUESTED_BY_USER}"
+  # If REQUESTED_BY_USER is the same as the user who triggered the build manually, don't mention the CC
+  if [[ "${REQUESTED_BY_USER}" != "${BUILD_USER_ID}" ]]; then
+    MSG_FOOTER+="CC: @${REQUESTED_BY_USER}"
+  fi
 fi
 if [[ "${JOB_NAME}" == 'QA-'* ]] && [[ "${1}" == 'SUCCESS' || "${1}" == 'UNSTABLE' ]]; then
   notify_mattermost_message_add_msg_icon 'java' "${BUILD_URL}testReport/"
