@@ -85,6 +85,7 @@ if [[ -n "${REQUESTED_BY_USER}" ]]; then
   fi
 fi
 if [[ "${JOB_NAME}" == 'QA-'* ]] && [[ "${1}" == 'SUCCESS' || "${1}" == 'UNSTABLE' ]]; then
+  notify_mattermost_message_add_msg_icon 'aerius' "https://${JOB_NAME#QA-}.aerius.nl"
   notify_mattermost_message_add_msg_icon 'java' "${BUILD_URL}testReport/"
   notify_mattermost_message_add_msg_icon 'cucumber_reports' "${BUILD_URL}cucumber-html-reports/"
 fi
