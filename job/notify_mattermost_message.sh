@@ -11,14 +11,23 @@ function notify_mattermost_message_add_label() {
   echo '!['"${1}"'](https://nexus.aerius.nl/repository/resources/images/label_'"${1}"'.png)'
 }
 
-# Default title and action
-MSG_TITLE="[${JOB_NAME} ${BUILD_DISPLAY_NAME}](${BUILD_URL})"
-MSG_ICONS=
-MSG_ACTION='build'
+function notify_mattermost_message_get_url_for_environment() {
+  SUBDOMAIN_NAME="${1}"
+  DOMAIN='nl'
+
+  [[ "${SUBDOMAIN_NAME}" == 'QA-'* ]] && SUBDOMAIN_NAME="${SUBDOMAIN_NAME#QA-}"
+  [[ "${SUBDOMAIN_NAME}" == 'UK-'* ]] && SUBDOMAIN_NAME="${SUBDOMAIN_NAME#UK-}" && DOMAIN='uk'
+  echo "https://${SUBDOMAIN_NAME,,}.aerius.${DOMAIN}"
+}
 
 function notify_mattermost_message_add_msg_icon() {
   MSG_ICONS+="[:${1}:](${2}) "
 }
+
+# Default title and action
+MSG_TITLE="[${JOB_NAME} ${BUILD_DISPLAY_NAME}](${BUILD_URL})"
+MSG_ICONS=
+MSG_ACTION='build'
 
 # If BUILD_DISPLAY_NAME contains a space, it's a custom one, use that instead
 [[ "${BUILD_DISPLAY_NAME}" == *' '* ]] && MSG_TITLE="[${BUILD_DISPLAY_NAME^^}](${BUILD_URL})"
@@ -71,9 +80,7 @@ MSG_FOOTER=
 "
 if [[ "${BUILD_DISPLAY_NAME}" == *' '* ]] && [[ "${MSG_ACTION}" == 'apply' ]] && [[ "${1}" == 'SUCCESS' ]]; then
   CUSTOM_JOB_NAME="${BUILD_DISPLAY_NAME%% *}"
-  ENVIRONMENT_URL="https://${CUSTOM_JOB_NAME}.aerius.nl"
-  [[ "${CUSTOM_JOB_NAME}" == 'UK-'* ]] && ENVIRONMENT_URL="https://${CUSTOM_JOB_NAME#UK-}.aerius.uk"
-  notify_mattermost_message_add_msg_icon 'aerius' "${ENVIRONMENT_URL,,}"
+  notify_mattermost_message_add_msg_icon 'aerius' $(notify_mattermost_message_get_url_for_environment "${CUSTOM_JOB_NAME}")
 fi
 if [[ -n "${REQUESTED_BY_USER}" ]]; then
   REQUESTED_BY_USER="${REQUESTED_BY_USER#@}"
@@ -85,7 +92,7 @@ if [[ -n "${REQUESTED_BY_USER}" ]]; then
   fi
 fi
 if [[ "${JOB_NAME}" == 'QA-'* ]] && [[ "${1}" == 'SUCCESS' || "${1}" == 'UNSTABLE' ]]; then
-  notify_mattermost_message_add_msg_icon 'aerius' "https://${JOB_NAME#QA-}.aerius.nl"
+  notify_mattermost_message_add_msg_icon 'aerius' $(notify_mattermost_message_get_url_for_environment "${JOB_NAME}")
   notify_mattermost_message_add_msg_icon 'java' "${BUILD_URL}testReport/"
   notify_mattermost_message_add_msg_icon 'cucumber_reports' "${BUILD_URL}cucumber-html-reports/"
 fi
