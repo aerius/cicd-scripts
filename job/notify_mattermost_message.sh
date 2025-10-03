@@ -92,7 +92,11 @@ if [[ -n "${REQUESTED_BY_USER}" ]]; then
   fi
 fi
 if [[ "${JOB_NAME}" == 'QA-'* ]] && [[ "${1}" == 'SUCCESS' || "${1}" == 'UNSTABLE' ]]; then
-  notify_mattermost_message_add_msg_icon 'aerius' $(notify_mattermost_message_get_url_for_environment "${JOB_NAME}")
+  if [[ "${JOB_NAME}" == 'QA-GENERIC' ]]; then
+    notify_mattermost_message_add_msg_icon 'aerius' $(notify_mattermost_message_get_url_for_environment "${SOURCE_JOB_NAME}")
+  else
+    notify_mattermost_message_add_msg_icon 'aerius' $(notify_mattermost_message_get_url_for_environment "${JOB_NAME}")
+  fi
   notify_mattermost_message_add_msg_icon 'java' "${BUILD_URL}testReport/"
   notify_mattermost_message_add_msg_icon 'cucumber_reports' "${BUILD_URL}cucumber-html-reports/"
 fi
