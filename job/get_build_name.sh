@@ -14,6 +14,13 @@ elif [[ "${JOB_NAME}" == 'STIKSTOFJE-DEPLOY-OTA-ENVIRONMENT' ]]; then
   : ${BUILD_NUMBER?'BUILD_NUMBER is required for this script to function'}
 
   echo -n "${ENVIRONMENT_NAME} #${BUILD_NUMBER}"
+elif [[ "${JOB_NAME}" == 'QA-GENERIC' ]]; then
+  # Check whether the required vars are set
+  : ${SOURCE_JOB_NAME?'SOURCE_JOB_NAME is required for this script to function'}
+  : ${SOURCE_JOB_BUILD_NUMBER?'SOURCE_JOB_BUILD_NUMBER is required for this script to function'}
+  : ${USE_GIT_BRANCH_SPECIFIER?'USE_GIT_BRANCH_SPECIFIER is required for this script to function'}
+
+  echo -n "${SOURCE_JOB_NAME^^} (${USE_GIT_BRANCH_SPECIFIER}) #${SOURCE_JOB_BUILD_NUMBER}"
 elif [[ -z "${SOURCE_JOB_NAME}" ]]; then
   # Check whether the required vars are set
   : ${JOB_NAME?'JOB_NAME is required for this script to function'}
