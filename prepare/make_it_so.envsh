@@ -20,6 +20,20 @@ declare -p CICD_SCRIPTS_TOOLS_DIR > "${CICD_SCRIPTS_DIR}"/set_cicd_scripts_tools
 # Create tools directory if needed
 mkdir -p "${CICD_SCRIPTS_TOOLS_DIR}"
 
+# Determine architecture in case tools need to download a specific binary
+export CICD_SCRIPTS_TOOLS_ARCH_RAW=$(uname -m)
+case "${CICD_SCRIPTS_TOOLS_ARCH_RAW}" in
+  x86_64)
+    export CICD_SCRIPTS_TOOLS_ARCH="amd64"
+    ;;
+  aarch64)
+    export CICD_SCRIPTS_TOOLS_ARCH="arm64"
+    ;;
+  *)
+    echo "Error: Unsupported architecture '${CICD_SCRIPTS_TOOLS_ARCH_RAW}'"
+    ;;
+esac
+
 # Go back to the prepare directory
 cd prepare
 # Install tools
