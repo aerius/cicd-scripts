@@ -56,6 +56,19 @@ echo
 cat "${DOCKER_COMPOSE_PATH}"
 # Build images
 _cicd_log '# Building images'
-CICD_COMPOSE_EXTRA_ARGS=()
-[[ "${CICD_SUPPLY_HTTPS_DATA}" == 'true' ]] && CICD_COMPOSE_EXTRA_ARGS+=('--build-arg' 'HTTPS_DATA_USERNAME='"${HTTPS_DATA_USERNAME}" '--build-arg' 'HTTPS_DATA_PASSWORD='"${HTTPS_DATA_PASSWORD}")
-"${CICD_SCRIPTS_TOOLS_DIR}"/docker-compose -f "${DOCKER_COMPOSE_PATH}" --project-directory "${GENERATED_DIRECTORY}" build --pull --parallel ${CICD_COMPOSE_EXTRA_ARGS[@]}
+CICD_BUILDX_BAKE_EXTRA_ARGS=()
+[[ "${CICD_SUPPLY_HTTPS_DATA}" == 'true' ]] && CICD_BUILDX_BAKE_EXTRA_ARGS+=('--set' 'database*.args.HTTPS_DATA_USERNAME='"${HTTPS_DATA_USERNAME}" '--set' 'database*.args.HTTPS_DATA_PASSWORD='"${HTTPS_DATA_PASSWORD}")
+docker buildx bake -f "${DOCKER_COMPOSE_PATH}" ${CICD_BUILDX_BAKE_EXTRA_ARGS[@]} --print
+docker buildx bake -f "${DOCKER_COMPOSE_PATH}" ${CICD_BUILDX_BAKE_EXTRA_ARGS[@]}
+
+if [[ "${1}" != '--no-push' ]]; then
+  "${SCRIPT_DIR}"/push_prescript.sh
+
+  _cicd_log '# List local images to show container image size'
+  docker images | grep -F -e "${AERIUS_REGISTRY_URL}" -e REPOSITORY
+
+  # Push images
+  _cicd_log '# Pushing images'
+  docker buildx bake -f "${DOCKER_COMPOSE_PATH}" ${CICD_BUILDX_BAKE_EXTRA_ARGS[@]} --push
+  _cicd_log '# Finished pushing images'
+fi
