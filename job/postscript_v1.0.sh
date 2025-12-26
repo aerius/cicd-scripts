@@ -7,9 +7,6 @@ set -e
 SCRIPT_PATH=$(readlink -f "${0}")
 SCRIPT_DIR=$(dirname "${SCRIPT_PATH}")
 
-# Prepare stuff
-source "${SCRIPT_DIR}"/../prepare/make_it_so.envsh
-
 # Do various validations
 : ${DEPLOY_OTA_ENVIRONMENT_CICD_URL?'DEPLOY_OTA_ENVIRONMENT_CICD_URL is required'}
 : ${DEPLOY_OTA_ENVIRONMENT_CICD_LOGIN?'DEPLOY_OTA_ENVIRONMENT_CICD_LOGIN is required'}
