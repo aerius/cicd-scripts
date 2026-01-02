@@ -117,7 +117,7 @@ def processBuildPostJob(Map config) {
   def paramJobName = env.JOB_NAME == 'STIKSTOFJE-DEPLOY-OTA-ENVIRONMENT' ? env.ENVIRONMENT_NAME : env.JOB_NAME
 
   // Jobs starting with UK-, should use the UK account by default, if account is already set, that has precedence
-  def paramAwsAccountName = !env.AWS_ACCOUNT_NAME && env.JOB_NAME.toUpperCase().startsWith('UK-') ? 'UK-DEV' : (env.AWS_ACCOUNT_NAME ?: '')
+  def paramAwsAccountName = !env.AWS_ACCOUNT_NAME && paramJobName.toUpperCase().startsWith('UK-') ? 'UK-DEV' : (env.AWS_ACCOUNT_NAME ?: '')
 
   // If env.REQUESTED_BY_USER is not set and the job is triggered by a user, use this as the requester
   def paramRequestedByUser = !env.REQUESTED_BY_USER && env.BUILD_USER_ID && env.BUILD_USER_ID != 'ota-environment-deploy' ? env.BUILD_USER_ID : (env.REQUESTED_BY_USER ?: '')
