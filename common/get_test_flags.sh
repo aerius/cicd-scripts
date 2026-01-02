@@ -7,4 +7,4 @@ for FLAG in $(echo "${FLAGS}" | tr ',' '\n'); do
   fi
 done
 
-echo "${RESULT#,}"
+echo -n "${RESULT#,}"
