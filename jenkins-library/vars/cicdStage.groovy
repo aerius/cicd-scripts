@@ -33,7 +33,6 @@ def call(Map config = [:], String stageName, Closure body) {
     }
   } else {
     stage(stageName) {
-      echo "### [cicdStage] - Skipped stage: ${stageName}"
       Utils.markStageSkippedForConditional(STAGE_NAME)
     }
   }
