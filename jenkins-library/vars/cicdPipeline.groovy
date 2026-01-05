@@ -78,7 +78,7 @@ def call(Map config = [:], Closure body) {
 
           // Always notify, except when it's a PR checker job or it's not a succeeded QA job 
           def notify = true
-          if (jobIsPrChecker || (currentBuild.result == 'SUCCESS' && !jobIsQA)) {
+          if (jobIsPrChecker || (currentBuild.currentResult == 'SUCCESS' && !jobIsQA)) {
             notify = false
           }
 
