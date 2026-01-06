@@ -93,10 +93,15 @@ def call(Map config = [:], Closure body) {
                 }
               }
 
+              def jobTypeString = ''
+              jobTypeString = jobIsBuild  ? 'build' : jobTypeString
+              jobTypeString = jobIsQA     ? 'QA'    : jobTypeString
+              jobTypeString = jobIsDeploy ? (env.DEPLOY_TERRAFORM_ACTION == 'destroy' ? 'destroy' : 'deploy') : jobTypeString
+
               mattermostSend(
                 channel: (env.MATTERMOST_CHANNEL ? "#${env.MATTERMOST_CHANNEL}" : null),
                 color: sh(script: """${CICD_SCRIPTS_DIR}/job/notify_mattermost_color.sh "${currentBuild.result}" """, returnStdout: true),
-                message: sh(script: """${CICD_SCRIPTS_DIR}/job/notify_mattermost_message.sh "${currentBuild.result}" "${currentBuild.durationString}" """, returnStdout: true) + testStatusMessage
+                message: sh(script: """${CICD_SCRIPTS_DIR}/job/notify_mattermost_message.sh "${currentBuild.result}" "${currentBuild.durationString}" "${jobTypeString}" """, returnStdout: true) + testStatusMessage
               )
             }
           }
