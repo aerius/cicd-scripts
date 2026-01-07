@@ -1,1 +1,1 @@
-def call() {nl.aerius.jenkinslib.TestUtil.getTestStatusMessage(currentBuild)}
+def call() {nl.aerius.jenkinslib.util.TestUtil.getTestStatusMessage(currentBuild)}

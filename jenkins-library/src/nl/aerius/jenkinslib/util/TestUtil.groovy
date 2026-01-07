@@ -1,4 +1,4 @@
-package nl.aerius.jenkinslib
+package nl.aerius.jenkinslib.util
 
 import hudson.tasks.test.AbstractTestResultAction
 
