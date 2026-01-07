@@ -85,7 +85,7 @@ def call(Map config = [:], Closure body) {
             // for deploy jobs if no one requested it specifically (nightlies for example - QA job will do the actual notifying)
             || (jobIsDeploy && !env.REQUESTED_BY_USER)
             // for build jobs if it was a success (so do notify when it crashes or becomes unstable)
-            || (jobIsBuild && current.currentResult == 'SUCCESS')
+            || (jobIsBuild && currentBuild.currentResult == 'SUCCESS')
           ) {
             notify = false
           }
