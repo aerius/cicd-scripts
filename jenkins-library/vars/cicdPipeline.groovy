@@ -76,9 +76,17 @@ def call(Map config = [:], Closure body) {
             processQAReports(config)
           }
 
-          // Always notify, except when it's a PR checker job or it's not a succeeded QA job 
+          // Always notify, except when the specific exclusions below apply.. this is rather extensive so I'll make it extra verbose
           def notify = true
-          if (jobIsPrChecker || (!env.REQUESTED_BY_USER && currentBuild.currentResult == 'SUCCESS' && !jobIsQA)) {
+          // Do not notify ...
+          if (
+            // for PR check jobs
+            jobIsPrChecker
+            // for deploy jobs if no one requested it specifically (nightlies for example - QA job will do the actual notifying)
+            || (jobIsDeploy && !env.REQUESTED_BY_USER)
+            // for build jobs if it was a success (so do notify when it crashes or becomes unstable)
+            || (jobIsBuild && current.currentResult == 'SUCCESS')
+          ) {
             notify = false
           }
 
