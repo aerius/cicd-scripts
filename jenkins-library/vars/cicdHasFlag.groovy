@@ -1,1 +1,1 @@
-def call(String flag) {nl.aerius.jenkinslib.FlagUtil.hasFlag(this.env.FLAGS, flag)}
+def call(String flag) {nl.aerius.jenkinslib.util.FlagUtil.hasFlag(this.env.FLAGS, flag)}
