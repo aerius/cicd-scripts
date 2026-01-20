@@ -121,7 +121,7 @@ def call(Map config = [:], Closure body) {
 
           // Process post job webhooks and if web hooks are not working, mark job as unstable to signal this (not crashing on purpose).
           // At this time the webhooks used are just to help make stuff more user friendly, shouldn't be the end of the world if it crashes.
-          catchError(stageResult: 'UNSTABLE') {
+          catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
             cicdPipelineProcessPostJobWebhooks(jobIsBuild, jobIsDeploy, jobIsPrChecker, jobIsQA)
           }
         }
