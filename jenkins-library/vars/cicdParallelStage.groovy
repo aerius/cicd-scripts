@@ -17,9 +17,21 @@ def call(Map config = [:], String stageName, Closure body) {
       // always add an index to the Env, which can be used to make the stages unique
       branchEnv << "BRANCH_INDEX=${i}"
 
-      tasks[branchEnv.join(', ')] = { ->
-        withEnv(branchEnv) {
-          body()
+      String branchName = branchEnv.join(', ')
+      // explicitly tell CICD_STAGE to not handle crashes.. We'll do that ourselves if needed
+      branchEnv << "CICD_STAGE_DO_NOT_HANDLE_CRASH=true"
+      tasks[branchName] = { ->
+        try {
+          withEnv(branchEnv) {
+            body()
+          }
+        } catch (err) {
+          echo "### [cicdParallelStage] - Crashed in subtask: ${branchName}"
+          // First crash wins!
+          if (!env.CICD_CRASHED_STAGE) {
+            env.CICD_CRASHED_STAGE = branchName
+          }
+          throw err
         }
       }
     }

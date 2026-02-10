@@ -27,7 +27,10 @@ def call(Map config = [:], String stageName, Closure body) {
         }
       } catch (err) {
         echo "### [cicdStage] - Crashed in stage: ${stageName}"
-        env.CICD_CRASHED_STAGE = stageName
+        // First crash wins! also do not record it if explicitly asked to not handle
+        if (!env.CICD_CRASHED_STAGE && !env.CICD_STAGE_DO_NOT_HANDLE_CRASH) {
+          env.CICD_CRASHED_STAGE = stageName
+        }
         throw err
       }
     }
