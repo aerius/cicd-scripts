@@ -68,14 +68,21 @@ if [[ -n "${CICD_JOB_MESSAGES}" || -n "${3}" ]]; then
 
   MSG_JOB_MESSAGES+='```
 '
-  [[ "${1}" == 'ABORTED' ]] && MSG_JOB_MESSAGES+="Job was aborted"
+  [[ "${1}" == 'ABORTED' ]] && MSG_JOB_MESSAGES+='Job was aborted
+'
   # New way of detecting a crashed stage based on generic pipeline
-  [[ "${1}" == 'FAILURE' ]] && [[ -n "${CICD_CRASHED_STAGE}" ]] && MSG_JOB_MESSAGES+='Job crashed in stage `'"${CICD_CRASHED_STAGE}"'`'
+  [[ "${1}" == 'FAILURE' ]] && [[ -n "${CICD_CRASHED_STAGE}" ]] && MSG_JOB_MESSAGES+='Job crashed in stage `'"${CICD_CRASHED_STAGE}"'`
+'
   # Old way of detecting a crashed stage based on manual magic
-  [[ "${1}" == 'FAILURE' ]] && [[ -z "${CICD_CRASHED_STAGE}" ]] && MSG_JOB_MESSAGES+='Job crashed in stage `'"${CICD_LAST_STARTED_STAGE:-Unknown}"'`'
+  [[ "${1}" == 'FAILURE' ]] && [[ -z "${CICD_CRASHED_STAGE}" ]] && MSG_JOB_MESSAGES+='Job crashed in stage `'"${CICD_LAST_STARTED_STAGE:-Unknown}"'`
+'
+  # Mention subtask as well if that was where the crash originated
+  [[ "${1}" == 'FAILURE' ]] && [[ -n "${CICD_CRASHED_PARALLEL_SUBTASK}" ]] && MSG_JOB_MESSAGES+='Which originated in subtask `'"${CICD_CRASHED_PARALLEL_SUBTASK}"'`
+'
 # We use the fallback message if it's an older one
 else
-  MSG_JOB_MESSAGES+="The \`${MSG_ACTION}\` finished with status \`${1}\` in \`${2%and counting}\`"
+  MSG_JOB_MESSAGES+='The `'"${MSG_ACTION}"'` finished with status `'"${1}"'` in `'"${2%and counting}"'`
+'
 fi
 
 MSG_FOOTER=

@@ -111,9 +111,11 @@ def call(Map config = [:], Closure body) {
               jobTypeString = jobIsQA     ? 'QA'    : jobTypeString
               jobTypeString = jobIsDeploy ? (env.DEPLOY_TERRAFORM_ACTION == 'destroy' ? 'destroy' : 'deploy') : jobTypeString
 
+              Map messageColors = [SUCCESS: 'good', FAILURE: 'danger']
+
               mattermostSend(
                 channel: (env.MATTERMOST_CHANNEL ? "#${env.MATTERMOST_CHANNEL}" : null),
-                color: sh(script: """${CICD_SCRIPTS_DIR}/job/notify_mattermost_color.sh "${currentBuild.result}" """, returnStdout: true),
+                color: messageColors.getOrDefault(currentBuild.result, 'warning'),
                 message: sh(script: """${CICD_SCRIPTS_DIR}/job/notify_mattermost_message.sh "${currentBuild.result}" "${currentBuild.durationString}" "${jobTypeString}" """, returnStdout: true) + testStatusMessage
               )
             }

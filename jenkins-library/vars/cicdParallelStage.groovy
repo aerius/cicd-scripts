@@ -18,8 +18,6 @@ def call(Map config = [:], String stageName, Closure body) {
       branchEnv << "BRANCH_INDEX=${i}"
 
       String branchName = branchEnv.join(', ')
-      // explicitly tell CICD_STAGE to not handle crashes.. We'll do that ourselves if needed
-      branchEnv << "CICD_STAGE_DO_NOT_HANDLE_CRASH=true"
       tasks[branchName] = { ->
         try {
           withEnv(branchEnv) {
@@ -28,8 +26,8 @@ def call(Map config = [:], String stageName, Closure body) {
         } catch (err) {
           echo "### [cicdParallelStage] - Crashed in subtask: ${branchName}"
           // First crash wins!
-          if (!env.CICD_CRASHED_STAGE) {
-            env.CICD_CRASHED_STAGE = branchName
+          if (!env.CICD_CRASHED_PARALLEL_SUBTASK) {
+            env.CICD_CRASHED_PARALLEL_SUBTASK = branchName
           }
           throw err
         }
