@@ -16,6 +16,18 @@ def call(Map config) {
   // If env.REQUESTED_BY_USER is not set and the job is triggered by a user, use this as the requester
   def paramRequestedByUser = !env.REQUESTED_BY_USER && env.BUILD_USER_ID && env.BUILD_USER_ID != 'ota-environment-deploy' ? env.BUILD_USER_ID : (env.REQUESTED_BY_USER ?: '')
 
+  def paramFlags = ''
+  // if it is a Map we should handle it as a Map that contains flags per theme
+  if (config.deployFlags && config.deployFlags instanceof Map) {
+    paramFlags = config.deployFlags.getOrDefault('SHARED', '')
+
+    if (config.deployFlags.containsKey(env.SERVICE_THEME)) {
+      paramFlags += ',' + config.deployFlags.get(env.SERVICE_THEME)
+    }
+  } else {
+    paramFlags = config.deployFlags
+  }
+
   def jobParams = [
     string(name: 'SOURCE_JOB_NAME',          value: paramJobName),
     string(name: 'SOURCE_JOB_BUILD_NUMBER' , value: env.BUILD_NUMBER),
@@ -29,7 +41,7 @@ def call(Map config) {
     SERVICE_TYPE      : env.SERVICE_TYPE,
     SERVICE_THEME     : env.SERVICE_THEME,
     AWS_ACCOUNT_NAME  : paramAwsAccountName,
-    FLAGS             : config.deployFlags,
+    FLAGS             : paramFlags,
     MATTERMOST_CHANNEL: env.MATTERMOST_CHANNEL,
     REQUESTED_BY_USER : paramRequestedByUser,
     CICD_JOB_MESSAGES : getJobMessagesAndAddCurrentJobDuration('build'),
