@@ -227,6 +227,7 @@ if [[ "${DEPLOY_TERRAFORM_ACTION}" != 'dry-run' ]]; then
   #  which I hope will be history with this included.
   TERRAFORM_ENVIRONMENT="${ENV_NAME}" \
   TERRAFORM_ACTION='init' \
+  TERRAFORM_COMPONENT=application_services \
     scripts/do-terragrunt-action.sh
 
   TERRAFORM_ENVIRONMENT="${ENV_NAME}" \
