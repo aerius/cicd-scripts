@@ -222,6 +222,13 @@ cat "${ENV_ROOT_DIR}/environment.terragrunt.hcl"
 
 # Do the real terragrunt action if it's not a dry run
 if [[ "${DEPLOY_TERRAFORM_ACTION}" != 'dry-run' ]]; then
+  # Do a init first so everything is fetched and cached.
+  # While not required, it cleans up the log and we seem to be hitting some race-condition like issues
+  #  which I hope will be history with this included.
+  TERRAFORM_ENVIRONMENT="${ENV_NAME}" \
+  TERRAFORM_ACTION='init' \
+    scripts/do-terragrunt-action.sh
+
   TERRAFORM_ENVIRONMENT="${ENV_NAME}" \
   TERRAFORM_ACTION="${DEPLOY_TERRAFORM_ACTION}" \
   TERRAFORM_COMPONENT=application_services \
