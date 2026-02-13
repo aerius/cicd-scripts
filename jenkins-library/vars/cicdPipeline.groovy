@@ -56,9 +56,18 @@ def call(Map config = [:], Closure body) {
             withEnv(wrapperEnvs) {
               body()
 
-              // Process any post jobs stuff
-              if (jobIsBuild) {
-                cicdPipelineProcessPostJobBuild(config)
+              try {
+                // Process any post jobs stuff
+                if (jobIsBuild) {
+                  cicdPipelineProcessPostJobBuild(config)
+                }
+              } catch (err) {
+                echo "### [cicdPipeline] - Crashed in post-job actions"
+                // First crash wins!
+                if (!env.CICD_CRASHED_STAGE) {
+                  env.CICD_CRASHED_STAGE = 'cicdPipeline: Post-Job actions'
+                }
+                throw err
               }
             }
           }
