@@ -22,7 +22,11 @@ def call(Map config) {
     paramFlags = config.deployFlags.getOrDefault('SHARED', '')
 
     if (config.deployFlags.containsKey(env.SERVICE_THEME)) {
-      paramFlags += ',' + config.deployFlags.get(env.SERVICE_THEME)
+      // Only add a comma if there are any flags present already
+      if (paramFlags) {
+        paramFlags += ','
+      }
+      paramFlags += config.deployFlags.get(env.SERVICE_THEME)
     }
   } else {
     paramFlags = config.deployFlags
