@@ -34,12 +34,12 @@ def call(Map config) {
   }
 
   def jobParams = [
-    string(name: 'SOURCE_JOB_NAME',          value: paramJobName),
-    string(name: 'SOURCE_JOB_BUILD_NUMBER' , value: env.BUILD_NUMBER),
-    string(name: 'DEPLOY_GIT_COMMIT',        value: env.GIT_COMMIT),
-    string(name: 'DEPLOY_GIT_URL',           value: paramGitUrl),
-    string(name: 'AERIUS_REGISTRY_URL',      value: env.AERIUS_REGISTRY_URL),
-    string(name: 'DEPLOY_IMAGE_TAG',         value: env.AERIUS_IMAGE_TAG),
+    string(name: 'SOURCE_JOB_NAME',         value: paramJobName),
+    string(name: 'SOURCE_JOB_BUILD_NUMBER', value: env.BUILD_NUMBER),
+    string(name: 'DEPLOY_GIT_COMMIT',       value: env.GIT_COMMIT),
+    string(name: 'DEPLOY_GIT_URL',          value: paramGitUrl),
+    string(name: 'AERIUS_REGISTRY_URL',     value: env.AERIUS_REGISTRY_URL),
+    string(name: 'DEPLOY_IMAGE_TAG',        value: env.AERIUS_IMAGE_TAG),
   ]
   // Add optional params, if not set they will fallback to default values set in the job itself
   [
