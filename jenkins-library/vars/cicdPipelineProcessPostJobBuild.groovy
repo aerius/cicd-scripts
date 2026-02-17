@@ -21,12 +21,13 @@ def call(Map config) {
   if (config.deployFlags && config.deployFlags instanceof Map) {
     paramFlags = config.deployFlags.getOrDefault('SHARED', '')
 
-    if (config.deployFlags.containsKey(env.SERVICE_THEME)) {
+    def primaryServiceTheme = env.SERVICE_THEME.tokenize(',')[0]
+    if (config.deployFlags.containsKey(primaryServiceTheme)) {
       // Only add a comma if there are any flags present already
       if (paramFlags) {
         paramFlags += ','
       }
-      paramFlags += config.deployFlags.get(env.SERVICE_THEME)
+      paramFlags += config.deployFlags.get(primaryServiceTheme)
     }
   } else {
     paramFlags = config.deployFlags
