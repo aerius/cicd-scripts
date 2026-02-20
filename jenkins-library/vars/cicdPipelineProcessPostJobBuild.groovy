@@ -1,4 +1,12 @@
+import nl.aerius.jenkinslib.util.FlagUtil
 import nl.aerius.jenkinslib.util.StringUtil
+
+import com.amazonaws.auth.AWSStaticCredentialsProvider
+import com.amazonaws.auth.BasicSessionCredentials
+import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagement
+import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagementClientBuilder
+import com.amazonaws.services.simplesystemsmanagement.model.ParameterStringFilter
+import com.amazonaws.services.simplesystemsmanagement.model.DescribeParametersRequest
 
 // this is the equivalent of the old job/postscript_*.sh script with some extra convenience wrappers
 def call(Map config) {
@@ -10,8 +18,10 @@ def call(Map config) {
   // For our custom temporary builds, use the proper environment name
   def paramJobName = env.JOB_NAME == 'STIKSTOFJE-DEPLOY-OTA-ENVIRONMENT' ? env.ENVIRONMENT_NAME : env.JOB_NAME
 
-  // Jobs starting with UK-, should use the UK account by default, if account is already set, that has precedence
-  def paramAwsAccountName = !env.AWS_ACCOUNT_NAME && paramJobName.toUpperCase().startsWith('UK-') ? 'UK-DEV' : (env.AWS_ACCOUNT_NAME ?: '')
+  // Jobs starting with UK-, should use the UK account by default, if account is already set, that has precedence.
+  // NL account will be the default if nothing is specified.
+  def paramAwsAccountName = 'NL-DEV'
+  paramAwsAccountName = !env.AWS_ACCOUNT_NAME && paramJobName.toUpperCase().startsWith('UK-') ? 'UK-DEV' : (env.AWS_ACCOUNT_NAME ?: paramAwsAccountName)
 
   // If env.REQUESTED_BY_USER is not set and the job is triggered by a user, use this as the requester
   def paramRequestedByUser = !env.REQUESTED_BY_USER && env.BUILD_USER_ID && env.BUILD_USER_ID != 'ota-environment-deploy' ? env.BUILD_USER_ID : (env.REQUESTED_BY_USER ?: '')
@@ -19,16 +29,16 @@ def call(Map config) {
   def paramFlags = ''
   // if it is a Map we should handle it as a Map that contains flags per theme
   if (config.deployFlags && config.deployFlags instanceof Map) {
-    paramFlags = config.deployFlags.getOrDefault('SHARED', '')
-
     def primaryServiceTheme = env.SERVICE_THEME.tokenize(',')[0]
-    if (config.deployFlags.containsKey(primaryServiceTheme)) {
-      // Only add a comma if there are any flags present already
-      if (paramFlags) {
-        paramFlags += ','
-      }
-      paramFlags += config.deployFlags.get(primaryServiceTheme)
-    }
+
+    // First add any dynamic flags for this environment
+    paramFlags = FlagUtil.addFlag(paramFlags, getDynamicFlagsForCurrentEnvironment(paramAwsAccountName.toLowerCase(), paramJobName))
+    // Then add any shared flags
+    paramFlags = FlagUtil.addFlag(paramFlags, config.deployFlags.getOrDefault('SHARED', ''))
+    // After add any flags specific to the primary theme
+    paramFlags = FlagUtil.addFlag(paramFlags, config.deployFlags.getOrDefault(primaryServiceTheme, ''))
+    // Last but not least, add any job specific flags
+    paramFlags = FlagUtil.addFlag(paramFlags, env.JOB_SPECIFIC_FLAGS ?: '')
   } else {
     paramFlags = config.deployFlags
   }
@@ -68,4 +78,51 @@ def getJobMessagesAndAddCurrentJobDuration(String durationType) {
   result += "jobduration ${durationType} ${StringUtil.trimSuffix(currentBuild.durationString, 'and counting')}"
 
   return result
+}
+
+def getDynamicFlagsForCurrentEnvironment(String profile, String environment) {
+  def awsRoleAccount = env["CICD_SCRIPTS_AWS_PROFILE_" + profile.replaceAll('-', '_')] // this uses getAt() internally
+  def awsRegion = profile.startsWith('UK-') ? 'eu-west-2' : 'eu-west-1'
+
+  withAWS(roleAccount: awsRoleAccount, role: 'jenkins-nodes-qa', region: awsRegion) {
+    // Filter to only get parameters for given environment
+    def filter = new ParameterStringFilter()
+      .withKey('Name')
+      .withOption('BeginsWith')
+      .withValues("/${environment.toLowerCase()}/flags/".toString())
+
+    // The Java SDK won't get this from the environment correctly as it's pure Java, so we need
+    //  to supply these explicitly
+    def awsCreds = new BasicSessionCredentials(
+      env.AWS_ACCESS_KEY_ID,
+      env.AWS_SECRET_ACCESS_KEY,
+      env.AWS_SESSION_TOKEN
+    )
+
+    def ssm = AWSSimpleSystemsManagementClientBuilder.standard()
+      .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
+      .withRegion(env.AWS_REGION)
+      .build()
+
+    // Execute request
+    def response = ssm.describeParameters(new DescribeParametersRequest().withParameterFilters(filter))
+
+    // Collect parameters, formatting them as a flag and only collect the unique entries.
+    // Sort it as well. Even though they should never overlap content wise, some wise guy might get some weird ideas
+    //  and we want to be sure this code produces the same order in such a case.
+    def flags = response.parameters.collect { param ->
+        def parts = param.name.split('/')
+        // parts[1] = environment name, parts[3] = flag name
+        return "${parts[1]}/${parts[3]}".toUpperCase()
+    }.sort().unique()
+
+    def result = flags.join(',')
+    if (result) {
+      echo "### [cicdPipeline] - Found dynamic flags to add for current environment: ${result}"
+    } else {
+      echo '### [cicdPipeline] - No dynamic flags found to add for current environment'
+    }
+
+    return result
+  }
 }
