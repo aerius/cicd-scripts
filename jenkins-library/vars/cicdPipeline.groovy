@@ -1,3 +1,5 @@
+import nl.aerius.jenkinslib.util.BuildUtil
+
 def call(Map config = [:], Closure body) {
   def agentLabel = config.agentLabel ?: 'any'
 
@@ -85,6 +87,40 @@ def call(Map config = [:], Closure body) {
         script {
           echo "### [cicdPipeline] - Finished. Current Status: ${currentBuild.currentResult}"
 
+          def flakyJobResultIfAny = cicdPipelineFlakyJob(currentBuild)
+          def restartLimitReached = false
+          // If this is a flaky job, do check if similar previous jobs failed as well..
+          // If 3 consecutive jobs for this environment crashed (checking the last 10 jobs), stop retrying
+          if (flakyJobResultIfAny != null) {
+            int countPreviousJobs = 0
+            int amountRestarted = 0
+
+            def currentEnvironment = BuildUtil.getEnvironment(currentBuild)
+            def previousBuild = currentBuild.previousBuild
+            while (previousBuild != null && countPreviousJobs < 10) {
+              def previousEnvironment = BuildUtil.getEnvironment(previousBuild)
+
+              if (currentEnvironment == previousEnvironment) {
+                if (previousBuild.result == 'FAILURE') {
+                  amountRestarted++
+                } else {
+                  break
+                }
+              }
+
+              previousBuild = previousBuild.previousBuild
+              countPreviousJobs++
+            }
+
+            if (amountRestarted > 1) {
+              echo "### [cicdPipeline] - Flaky job restarted ${amountRestarted} times.. Time to give up.."
+              // Restarted enough times already, don't do that again
+              restartLimitReached = true
+            } else {
+              echo "### [cicdPipeline] - Flaky job restarted ${amountRestarted} times.."
+            }
+          }
+
           // If QA job, we want to collect some reports based on what is requested by the pipeline
           if (jobIsQA) {
             cicdPipelineProcessQAReports(config)
@@ -125,14 +161,35 @@ def call(Map config = [:], Closure body) {
               jobTypeString = jobIsQA     ? 'QA'    : jobTypeString
               jobTypeString = jobIsDeploy ? (env.DEPLOY_TERRAFORM_ACTION == 'destroy' ? 'destroy' : 'deploy') : jobTypeString
 
+              def jobFlakynessMessage = ''
+              jobFlakynessMessage = flakyJobResultIfAny != null ? "\n\n:snowflake: Job is flaky and will be restarted, found: `${flakyJobResultIfAny}`" : jobFlakynessMessage
+              jobFlakynessMessage = restartLimitReached ? '\n\n:snowflake: Job is flaky but reached the retry limit.' : jobFlakynessMessage
+
               Map messageColors = [SUCCESS: 'good', FAILURE: 'danger']
 
               mattermostSend(
                 channel: (env.MATTERMOST_CHANNEL ? "#${env.MATTERMOST_CHANNEL}" : null),
-                color: messageColors.getOrDefault(currentBuild.result, 'warning'),
-                message: sh(script: """${CICD_SCRIPTS_DIR}/job/notify_mattermost_message.sh "${currentBuild.result}" "${currentBuild.durationString}" "${jobTypeString}" """, returnStdout: true) + testStatusMessage
+                color: flakyJobResultIfAny && !restartLimitReached ? '#D3D3D3' : messageColors.getOrDefault(currentBuild.result, 'warning'),
+                message: sh(script: """${CICD_SCRIPTS_DIR}/job/notify_mattermost_message.sh "${currentBuild.result}" "${currentBuild.durationString}" "${jobTypeString}" """, returnStdout: true) + testStatusMessage + jobFlakynessMessage
               )
             }
+          }
+
+          // Restart job if it's flaky and the limit is not reached yet
+          if (flakyJobResultIfAny && !restartLimitReached) {
+            echo '### [cicdPipeline] - Flaky job detected.. Restarting..'
+            def rebuildParams = []
+
+            params.each { key, value ->
+                // Just use a string param for simplicity, which works for most pipeline parameters.
+                rebuildParams.add(string(name: key, value: value.toString()))
+            }
+
+            build(
+              job: env.JOB_NAME,
+              parameters: rebuildParams,
+              wait: false
+            )
           }
 
           // Process post job webhooks and if web hooks are not working, mark job as unstable to signal this (not crashing on purpose).
