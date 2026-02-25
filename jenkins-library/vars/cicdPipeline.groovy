@@ -85,6 +85,8 @@ def call(Map config = [:], Closure body) {
         script {
           echo "### [cicdPipeline] - Finished. Current Status: ${currentBuild.currentResult}"
 
+          def flakyJobResultIfAny = cicdPipelineFlakyJob(currentBuild)
+
           // If QA job, we want to collect some reports based on what is requested by the pipeline
           if (jobIsQA) {
             cicdPipelineProcessQAReports(config)
@@ -125,14 +127,33 @@ def call(Map config = [:], Closure body) {
               jobTypeString = jobIsQA     ? 'QA'    : jobTypeString
               jobTypeString = jobIsDeploy ? (env.DEPLOY_TERRAFORM_ACTION == 'destroy' ? 'destroy' : 'deploy') : jobTypeString
 
+              def jobFlakynessMessage = flakyJobResultIfAny ? "\n\n:snowflake: Job is flaky and will be restarted, found: `${flakyJobResultIfAny}`" : ''
+
               Map messageColors = [SUCCESS: 'good', FAILURE: 'danger']
 
               mattermostSend(
                 channel: (env.MATTERMOST_CHANNEL ? "#${env.MATTERMOST_CHANNEL}" : null),
-                color: messageColors.getOrDefault(currentBuild.result, 'warning'),
-                message: sh(script: """${CICD_SCRIPTS_DIR}/job/notify_mattermost_message.sh "${currentBuild.result}" "${currentBuild.durationString}" "${jobTypeString}" """, returnStdout: true) + testStatusMessage
+                color: flakyJobResultIfAny ? '#D3D3D3' : messageColors.getOrDefault(currentBuild.result, 'warning'),
+                message: sh(script: """${CICD_SCRIPTS_DIR}/job/notify_mattermost_message.sh "${currentBuild.result}" "${currentBuild.durationString}" "${jobTypeString}" """, returnStdout: true) + testStatusMessage + jobFlakynessMessage
               )
             }
+          }
+
+          // Restart job if it's flaky
+          if (flakyJobResultIfAny) {
+            echo '### [cicdPipeline] - Flaky job detected.. Restarting..'
+            def rebuildParams = []
+
+            params.each { key, value ->
+                // Just use a string param for simplicity, which works for most pipeline parameters.
+                rebuildParams.add(string(name: key, value: value.toString()))
+            }
+
+            build(
+              job: env.JOB_NAME,
+              parameters: rebuildParams,
+              wait: false
+            )
           }
 
           // Process post job webhooks and if web hooks are not working, mark job as unstable to signal this (not crashing on purpose).
