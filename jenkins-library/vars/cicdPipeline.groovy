@@ -12,6 +12,11 @@ def call(Map config = [:], Closure body) {
       label agentLabel == 'any' ? '' : agentLabel
     }
 
+    options {
+      // We do not support this.. Almost always restarting from a specific stage will cause issues.
+      disableRestartFromStage()
+    }
+
     stages {
       stage('PipelineWrapper') {
         steps {
