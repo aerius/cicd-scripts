@@ -15,6 +15,13 @@ if [[ -z "${FLAG_SETTINGS+x}" ]]; then
     declare -A FLAG_SETTINGS
 fi
 
+IGNORE_MISSING_DYNAMIC_FLAGS='false'
+# Dynamic flags might be missing, as those environments might already be destroyed, so ignore those for a destroy
+if [[ "${JOB_NAME}" == 'DEPLOY-OTA-ENVIRONMENT' && "${DEPLOY_TERRAFORM_ACTION}" == 'destroy' ]]; then
+  echo '# A Terraform destroy is ongoing, I will not crash when these are missing..'
+  IGNORE_MISSING_DYNAMIC_FLAGS='true'
+fi
+
 # Process flags specified
 echo '# Reading in flags (if any)'
 for FLAG in $(echo "${FLAGS}" | tr ',' '\n'); do
@@ -30,9 +37,14 @@ for FLAG in $(echo "${FLAGS}" | tr ',' '\n'); do
     IFS='/' read FLAG_ENV_NAME FLAG_ENV_ENTRY <<< "${FLAG,,}"
     ENTRIES=$(aws --profile "${AWS_ACCOUNT_NAME,,}" ssm describe-parameters --output text --query 'Parameters[*].Name' --filter 'Key=Name,Values=/'"${FLAG_ENV_NAME,,}"'/flags/'"${FLAG_ENV_ENTRY,,}"'/' | sed 's/\t/ /g')
     if [[ -z "${ENTRIES}" ]]; then
-      echo '# Could not find dynamic flag '"${FLAG}"'.. Crashing hard..'
-      read_job_flags_cleanup
-      exit 1
+      if [[ "${IGNORE_MISSING_DYNAMIC_FLAGS}" == 'true' ]]; then
+        echo '# Could not find dynamic flag.. Ignoring..'
+        continue
+      else
+        echo '# Could not find dynamic flag '"${FLAG}"'.. Crashing hard..'
+        read_job_flags_cleanup
+        exit 1
+      fi
     fi
     ENTRIES_ARRAY=(${ENTRIES})
     ENTRIES_TOTAL="${#ENTRIES_ARRAY[@]}"
