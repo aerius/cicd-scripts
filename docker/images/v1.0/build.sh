@@ -66,8 +66,6 @@ docker buildx bake -f "${DOCKER_COMPOSE_PATH}" ${CICD_BUILDX_BAKE_EXTRA_ARGS[@]}
 docker buildx bake -f "${DOCKER_COMPOSE_PATH}" ${CICD_BUILDX_BAKE_EXTRA_ARGS[@]}
 
 if [[ "${1}" != '--no-push' ]]; then
-  "${SCRIPT_DIR}"/push_prescript.sh
-
   _cicd_log '# List local images to show container image size'
   docker images | grep -F -e "${AERIUS_REGISTRY_URL}" -e REPOSITORY
 
