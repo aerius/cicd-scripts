@@ -52,7 +52,7 @@ source "${SCRIPT_DIR}"/../common/determine_deploy_webhost.envsh
 ENV_NAME_UPPERCASE="${SOURCE_JOB_NAME}"
 ENV_NAME="${SOURCE_JOB_NAME,,}"
 AWS_REGION='eu-west-1'
-COGNITO_USER_POOL_NAME='nl-dev-aerius'
+COGNITO_USER_POOL_NAME='nl-dev'
 COGNITO_USER_POOL_DOMAIN='auth-dev.aerius.nl'
 APP_TIMEZONE='Europe/Amsterdam'
 
