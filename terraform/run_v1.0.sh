@@ -67,7 +67,7 @@ APP_TIMEZONE='Europe/Amsterdam'
 # If UK deploy, we need to use other settings
 [[ "${AWS_ACCOUNT_NAME}" == UK-* ]] \
   && AWS_REGION='eu-west-2' \
-  && COGNITO_USER_POOL_NAME='uk-dev-aerius' \
+  && COGNITO_USER_POOL_NAME='uk-dev' \
   && COGNITO_USER_POOL_DOMAIN='auth-dev.aerius.uk' \
   && APP_TIMEZONE='Europe/London'
 COGNITO_CALLBACK_DOMAIN="${DEPLOY_WEBHOST}"
