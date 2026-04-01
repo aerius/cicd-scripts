@@ -7,10 +7,21 @@ def call(Map config = [:], String stageName, Closure body) {
     error("### [cicdStage] - config.when found with a non-boolean expression (${config.when.class}) for stage: '${stageName}'.. Really? How did you figure that would work.. Crashing hard")
   }
 
+  // If it's a PR check job, send github checks
+  def doPublishChecks = env.JOB_NAME.toUpperCase().startsWith('PULLREQUESTCHECKER-')
+
+  def publishChecksName = stageName
+
   // Only execute stage if when expression is not specified or when it evaluates to true
   //  (the above check makes sure it's a boolean so no need to do that here)
   if (config.when == null || config.when) {
     stage(stageName) {
+      if (doPublishChecks) {
+        publishChecks(
+            name    : publishChecksName,
+            status  : 'IN_PROGRESS'
+        )
+      }
       try {
         def wrapperEnvs = []
 
@@ -31,11 +42,36 @@ def call(Map config = [:], String stageName, Closure body) {
         if (!env.CICD_CRASHED_STAGE) {
           env.CICD_CRASHED_STAGE = stageName
         }
+
+        if (doPublishChecks) {
+          publishChecks(
+            name       : publishChecksName,
+            status     : 'COMPLETED',
+            conclusion : 'FAILURE'
+          )
+        }
+
         throw err
+      }
+
+      if (doPublishChecks) {
+        publishChecks(
+          name       : publishChecksName,
+          status     : 'COMPLETED',
+          conclusion : 'SUCCESS'
+        )
       }
     }
   } else {
     stage(stageName) {
+      if (doPublishChecks) {
+        publishChecks(
+            name       : publishChecksName,
+            status     : 'COMPLETED',
+            conclusion : 'SKIPPED'
+        )
+      }
+
       Utils.markStageSkippedForConditional(STAGE_NAME)
     }
   }
