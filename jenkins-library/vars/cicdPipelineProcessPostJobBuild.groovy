@@ -82,7 +82,7 @@ def getJobMessagesAndAddCurrentJobDuration(String durationType) {
 
 def getDynamicFlagsForCurrentEnvironment(String profile, String environment) {
   def awsRoleAccount = env["CICD_SCRIPTS_AWS_PROFILE_" + profile.replaceAll('-', '_')] // this uses getAt() internally
-  def awsRegion = profile.startsWith('UK-') ? 'eu-west-2' : 'eu-west-1'
+  def awsRegion = profile.startsWith('uk-') ? 'eu-west-2' : 'eu-west-1'
 
   withAWS(roleAccount: awsRoleAccount, role: 'jenkins-nodes-qa', region: awsRegion) {
     // Filter to only get parameters for given environment
