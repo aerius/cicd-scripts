@@ -1,4 +1,5 @@
 import nl.aerius.jenkinslib.util.BuildUtil
+import nl.aerius.jenkinslib.util.FlagUtil
 
 def call(Map config = [:], Closure body) {
   def agentLabel = config.agentLabel ?: 'any'
@@ -26,23 +27,38 @@ def call(Map config = [:], Closure body) {
             // Set build name
             buildName(sh(script: "${env.CICD_SCRIPTS_DIR}/job/get_build_name.sh", returnStdout: true))
 
-            // Keep a list of ENVs we want to wrap the body with. Mostly for convenience and help clean up
+            // Keep a map of ENVs we want to wrap the body with. Mostly for convenience and help clean up
             //  the Jenskinsfiles that make use of this pipeline.
             // What we wrap can be found below.
-            def wrapperEnvs = []
+            def wrapperEnvs = [:]
 
             // Allow user to supply global environment configuration
             if (config.environment) {
               config.environment.each {
-                key, value -> wrapperEnvs << "${key}=$value"
+                key, value -> wrapperEnvs[key] = value
               }
             }
             // Also a script version, we do this so it runs in this context where a node is allocated
             // Without it will crash.. hard..
             if (config.environmentScripts) {
               config.environmentScripts.each {
-                key, value -> wrapperEnvs << "${key}=" + sh(script: value, returnStdout: true)
+                key, value -> wrapperEnvs[key] = sh(script: value, returnStdout: true)
               }
+            }
+
+            // For QA jobs also handle qaFlags block (similarly to deployFlags)
+            if (jobIsQA && config.qaFlags && config.qaFlags instanceof Map) {
+              def primaryServiceTheme = env.SERVICE_THEME.tokenize(',')[0]
+              def qaFlags = ''
+
+              // First use any flags already supplied to the job
+              qaFlags = env.FLAGS ?: ''
+              // Then add any shared flags
+              qaFlags = FlagUtil.addFlag(qaFlags, config.qaFlags.getOrDefault('SHARED', ''))
+              // After add any flags specific to the primary theme
+              qaFlags = FlagUtil.addFlag(qaFlags, config.qaFlags.getOrDefault(primaryServiceTheme, ''))
+
+              wrapperEnvs['FLAGS'] = qaFlags
             }
 
             // Set Docker registry environment vars as last step if it's a build job.
@@ -53,14 +69,14 @@ def call(Map config = [:], Closure body) {
               echo '### [cicdPipeline] - build job detected, setting Docker Registry vars'
               withCredentials([string(credentialsId: 'DOCKER_REGISTRY_HOSTNAME', variable: 'DOCKER_REGISTRY_HOSTNAME')]) {
                 def AERIUS_REGISTRY_PATH = sh(script: "${env.CICD_SCRIPTS_DIR}/docker/get_registry_path.sh", returnStdout: true)
-                wrapperEnvs << "AERIUS_REGISTRY_PATH=${AERIUS_REGISTRY_PATH}"
-                wrapperEnvs << "AERIUS_REGISTRY_URL=${DOCKER_REGISTRY_HOSTNAME}/${AERIUS_REGISTRY_PATH}/"
-                wrapperEnvs << "AERIUS_IMAGE_TAG=" + sh(script: "${env.CICD_SCRIPTS_DIR}/docker/get_image_tag.sh", returnStdout: true)
+                wrapperEnvs['AERIUS_REGISTRY_PATH'] = AERIUS_REGISTRY_PATH
+                wrapperEnvs['AERIUS_REGISTRY_URL']  = "${DOCKER_REGISTRY_HOSTNAME}/${AERIUS_REGISTRY_PATH}/"
+                wrapperEnvs['AERIUS_IMAGE_TAG']     = sh(script: "${env.CICD_SCRIPTS_DIR}/docker/get_image_tag.sh", returnStdout: true)
               }
             }
 
             // Run the actual body wrapped by the final global environment list we crafted
-            withEnv(wrapperEnvs) {
+            withEnv(wrapperEnvs.collect{key, value -> "${key}=${value}"}) {
               body()
 
               try {
