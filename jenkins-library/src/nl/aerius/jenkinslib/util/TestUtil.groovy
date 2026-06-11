@@ -60,7 +60,7 @@ def static getTestStatusMessage(def currentBuild) {
             passedPrevious          = totalPrevious - failedPrevious - skippedPrevious
             failedCypressPrevious   = getFailedCypressCount(previousResult)
             failedK6Previous        = getFailedK6Count(previousResult)
-            failedUnittestsPrevious = failedPrevious - failedCypressPrevious
+            failedUnittestsPrevious = failedPrevious - failedCypressPrevious - failedK6Previous
         }
 
         if (failed > 0 || (previousResult != null && failedPrevious > 0)) {
@@ -110,7 +110,7 @@ def static getTestStatusMap(def currentBuild) {
             passedPrevious          = totalPrevious - failedPrevious - skippedPrevious
             failedCypressPrevious   = getFailedCypressCount(previousResult)
             failedK6Previous        = getFailedK6Count(previousResult)
-            failedUnittestsPrevious = failedPrevious - failedCypressPrevious
+            failedUnittestsPrevious = failedPrevious - failedCypressPrevious - failedK6Previous
         }
 
         testStatus << [
