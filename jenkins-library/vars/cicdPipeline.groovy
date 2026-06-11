@@ -27,6 +27,12 @@ def call(Map config = [:], Closure body) {
             // Set build name
             buildName(sh(script: "${env.CICD_SCRIPTS_DIR}/job/get_build_name.sh", returnStdout: true))
 
+            // Process pre job webhooks and if web hooks are not working, mark job as unstable to signal this (not crashing on purpose).
+            // At this time the webhooks used are just to help make stuff more user friendly, shouldn't be the end of the world if it crashes.
+            catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+              cicdPipelineProcessPreJobWebhooks(jobIsBuild, jobIsDeploy, jobIsPrChecker, jobIsQA)
+            }
+
             // Keep a map of ENVs we want to wrap the body with. Mostly for convenience and help clean up
             //  the Jenskinsfiles that make use of this pipeline.
             // What we wrap can be found below.

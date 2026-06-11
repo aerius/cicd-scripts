@@ -1,5 +1,5 @@
 import nl.aerius.jenkinslib.WebhookType
 
 void call(def jobIsBuild, def jobIsDeploy, def jobIsPrChecker, def jobIsQA) {
-  cicdPipelineProcessJobWebhooks(WebhookType.POST, jobIsBuild, jobIsDeploy, jobIsPrChecker, jobIsQA)
+  cicdPipelineProcessJobWebhooks(WebhookType.PRE, jobIsBuild, jobIsDeploy, jobIsPrChecker, jobIsQA)
 }
