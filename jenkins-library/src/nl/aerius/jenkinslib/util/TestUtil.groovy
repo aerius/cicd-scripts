@@ -32,6 +32,16 @@ def static getPrettyDiff(def current, def previous) {
     }
 }
 
+def static getLastSuccesfulBuildNumber(def currentBuild) {
+    def lastSucces = currentBuild.previousSuccessfulBuild
+
+    if (lastSucces == null) {
+      return 0
+    }
+
+    return lastSucces.number
+}
+
 def static getTestStatusMessage(def currentBuild) {
     def testStatus = ""
     AbstractTestResultAction testResultAction = currentBuild.rawBuild.getAction(AbstractTestResultAction.class)
@@ -93,6 +103,7 @@ def static getTestStatusMap(def currentBuild) {
         def failedCypress   = getFailedCypressCount(testResultAction)
         def failedK6        = getFailedK6Count(testResultAction)
         def failedUnittests = failed - failedCypress - failedK6
+        def lastSuccesfulBuildNumber = getLastSuccesfulBuildNumber(currentBuild)
 
         def totalPrevious           = null
         def failedPrevious          = null
@@ -119,7 +130,9 @@ def static getTestStatusMap(def currentBuild) {
           failed          : failed,
           failedPrevious  : failedPrevious,
           skipped         : skipped,
-          skippedPrevious : skipped
+          skippedPrevious : skipped,
+
+          lastSuccesfulBuildNumber : lastSuccesfulBuildNumber
         ]
         if (failedCypress > 0 || (failedCypressPrevious != null && failedCypressPrevious > 0))
           testStatus << [
