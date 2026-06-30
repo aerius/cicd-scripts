@@ -3,6 +3,8 @@ def call(def build) {
     def hiccups = [
       'Unable to locate credentials. You can configure credentials by running "aws configure"',
       'ERROR: mkdir /var/lib/docker/buildkit/',
+      'ERROR: error during connect: Post "http://%2Fvar%2Frun%2Fdocker.sock',
+      ': dial tcp '
     ]
     // Get last 150 log lines
     def logLines = build.rawBuild.getLog(150).join('\n')
