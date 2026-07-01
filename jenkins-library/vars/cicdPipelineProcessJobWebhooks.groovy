@@ -19,9 +19,10 @@ void call(def webhookType, def jobIsBuild, def jobIsDeploy, def jobIsPrChecker, 
   ]
   if (webhookType == WebhookType.POST) {
     payloadMap.job << [
-      result         : currentBuild.result,
-      crashed_stage  : env.CICD_CRASHED_STAGE,
-      duration       : StringUtil.trimSuffix(currentBuild.durationString, 'and counting')
+      result          : currentBuild.result,
+      crashed_stage   : env.CICD_CRASHED_STAGE,
+      crashed_subtask : env.CICD_CRASHED_PARALLEL_SUBTASK,
+      duration        : StringUtil.trimSuffix(currentBuild.durationString, 'and counting')
     ]
   }
 
