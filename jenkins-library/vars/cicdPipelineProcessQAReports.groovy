@@ -1,7 +1,8 @@
 def call(Map config) {
   // jUnit
-  if (config.qaJunitEnabled) {
-    echo "### [cicdPipeline] - qaJunitEnabled.. Collecting junit test results"
+  // cucumber/k6 also write jUnit compatible files as well, so running that should also collect them
+  if (config.qaJunitEnabled || config.qaCucumberEnabled || config.qaK6Enabled) {
+    echo "### [cicdPipeline] - qaJunitEnabled / qaCucumberEnabled / qaK6Enabled.. Collecting junit test results"
     catchError(stageResult: 'FAILURE') {
       junit(testResults: config.qaJunitTestResults, allowEmptyResults: false)
     }
