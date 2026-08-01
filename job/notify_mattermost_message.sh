@@ -7,10 +7,6 @@ set -e
 SCRIPT_PATH=$(readlink -f "${0}")
 SCRIPT_DIR=$(dirname "${SCRIPT_PATH}")
 
-function notify_mattermost_message_add_label() {
-  echo '!['"${1}"'](https://nexus.aerius.nl/repository/resources/images/label_'"${1}"'.png)'
-}
-
 function notify_mattermost_message_get_url_for_environment() {
   SUBDOMAIN_NAME="${1}"
   DOMAIN='nl'
@@ -33,17 +29,13 @@ MSG_ACTION='build'
 [[ "${BUILD_DISPLAY_NAME}" == *' '* ]] && MSG_TITLE="[${BUILD_DISPLAY_NAME^^}](${BUILD_URL})"
 
 if [[ "${JOB_NAME}" == 'DEPLOY-OTA-ENVIRONMENT' ]]; then
-  MSG_TITLE+=' '$(notify_mattermost_message_add_label 'deploy')
   if [[ -n "${DEPLOY_TERRAFORM_ACTION}" ]]; then
-#    MSG_TITLE+=' '$(notify_mattermost_message_add_label "${DEPLOY_TERRAFORM_ACTION}")
     MSG_ACTION="${DEPLOY_TERRAFORM_ACTION}"
   fi
 elif [[ "${JOB_NAME}" == 'QA-GENERIC' ]]; then
   MSG_TITLE="[Manual QA-run on ${SOURCE_JOB_NAME}](${BUILD_URL})"
 elif [[ "${JOB_NAME}" == 'QA-'* ]]; then
   :
-else
-  MSG_TITLE+=' '$(notify_mattermost_message_add_label 'build')
 fi
 
 MSG_JOB_MESSAGES=
