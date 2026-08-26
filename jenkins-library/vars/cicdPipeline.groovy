@@ -9,6 +9,8 @@ def call(Map config = [:], Closure body) {
   def jobIsDeploy    = env.JOB_NAME == 'DEPLOY-OTA-ENVIRONMENT'
   def jobIsBuild     = !jobIsQA && !jobIsPrChecker && !jobIsDeploy
 
+  def jobIsImageBuildAcc = env.JOB_NAME == 'IMAGE-BUILD-ACC'
+
   pipeline {
     // Use agent label from config if provided
     agent {
@@ -74,10 +76,21 @@ def call(Map config = [:], Closure body) {
             if (jobIsBuild) {
               echo '### [cicdPipeline] - build job detected, setting Docker Registry vars'
               withCredentials([string(credentialsId: 'DOCKER_REGISTRY_HOSTNAME', variable: 'DOCKER_REGISTRY_HOSTNAME')]) {
-                def AERIUS_REGISTRY_PATH = sh(script: "${env.CICD_SCRIPTS_DIR}/docker/get_registry_path.sh", returnStdout: true)
-                wrapperEnvs['AERIUS_REGISTRY_PATH'] = AERIUS_REGISTRY_PATH
-                wrapperEnvs['AERIUS_REGISTRY_URL']  = "${DOCKER_REGISTRY_HOSTNAME}/${AERIUS_REGISTRY_PATH}/"
-                wrapperEnvs['AERIUS_IMAGE_TAG']     = sh(script: "${env.CICD_SCRIPTS_DIR}/docker/get_image_tag.sh", returnStdout: true)
+                if (jobIsImageBuildAcc && env.OVERRIDE_AERIUS_REGISTRY_PATH) {
+                  echo "### [cicdPipeline] - Overriding registry path with: ${env.OVERRIDE_AERIUS_REGISTRY_PATH}"
+                  wrapperEnvs['AERIUS_REGISTRY_PATH'] = env.OVERRIDE_AERIUS_REGISTRY_PATH
+                } else {
+                  def AERIUS_REGISTRY_PATH = sh(script: "${env.CICD_SCRIPTS_DIR}/docker/get_registry_path.sh", returnStdout: true)
+                  wrapperEnvs['AERIUS_REGISTRY_PATH'] = AERIUS_REGISTRY_PATH
+                }
+                wrapperEnvs['AERIUS_REGISTRY_URL']    = "${DOCKER_REGISTRY_HOSTNAME}/${wrapperEnvs['AERIUS_REGISTRY_PATH']}/"
+
+                if (jobIsImageBuildAcc && env.OVERRIDE_AERIUS_IMAGE_TAG) {
+                  echo "### [cicdPipeline] - Overriding image tag with: ${env.OVERRIDE_AERIUS_IMAGE_TAG}"
+                  wrapperEnvs['AERIUS_IMAGE_TAG']     = env.OVERRIDE_AERIUS_IMAGE_TAG
+                } else {
+                  wrapperEnvs['AERIUS_IMAGE_TAG']     = sh(script: "${env.CICD_SCRIPTS_DIR}/docker/get_image_tag.sh", returnStdout: true)
+                }
               }
             }
 
