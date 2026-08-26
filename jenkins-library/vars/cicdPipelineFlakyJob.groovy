@@ -5,7 +5,8 @@ def call(def build) {
       'ERROR: mkdir /var/lib/docker/buildkit/',
       'ERROR: error during connect: Post "http://%2Fvar%2Frun%2Fdocker.sock',
       ': dial tcp ',
-      'failed to register layer: symlink'
+      'failed to register layer: symlink',
+      'libnetwork.endpointCnt: Key not found in store.'
     ]
     // Get last 150 log lines
     def logLines = build.rawBuild.getLog(150).join('\n')
