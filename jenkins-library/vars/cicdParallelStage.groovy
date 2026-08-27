@@ -25,6 +25,7 @@ def call(Map config = [:], String stageName, Closure body) {
           }
         } catch (err) {
           echo "### [cicdParallelStage] - Crashed in subtask: ${branchName}"
+          echo "### Logging exception: ${err}"
           // First crash wins!
           if (!env.CICD_CRASHED_PARALLEL_SUBTASK) {
             env.CICD_CRASHED_PARALLEL_SUBTASK = branchName
