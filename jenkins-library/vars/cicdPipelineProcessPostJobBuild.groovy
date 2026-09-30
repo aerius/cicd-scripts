@@ -66,7 +66,7 @@ def call(Map config) {
   if (env.DRY_RUN) { jobParams << string(name: 'DEPLOY_TERRAFORM_ACTION', value: 'dry-run') }
   // if BUILD_DEPLOY_AS_PROD flag is detected, override SERVICE_TYPE to PROD
   // This doesn't mean it will deploy it to PROD, just deploy it with production configuration.
-  if (FlagUtil.hasFlag(env.JOB_SPECIFIC_FLAGS ?: '', 'BUILD_DEPLOY_AS_PROD')) { jobParams << string(name: 'SERVICE_TYPE', value: 'PROD') }
+  if (FlagUtil.hasFlag(env.JOB_SPECIFIC_FLAGS ?: '', 'BUILD_DEPLOY_AS_PROD')) { jobParams << string(name: 'SERVICE_TYPE', value: 'PRD') }
 
   // Trigger Terraform job that will do a deploy
   build(job: 'DEPLOY-OTA-ENVIRONMENT', parameters: jobParams, wait: false)
