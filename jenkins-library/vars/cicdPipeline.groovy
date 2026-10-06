@@ -71,9 +71,9 @@ def call(Map config = [:], Closure body) {
             }
 
             // QA-GENERIC can run any branch, but Sonar stores every upload as the main branch analysis.
-            // So only let runs of main upload, by skipping the Sonar goal in every Maven invocation for other branches.
-            if (jobIsQAGeneric && env.USE_GIT_BRANCH_SPECIFIER != 'main') {
-              echo "### [cicdPipeline] - QA-GENERIC on '${env.USE_GIT_BRANCH_SPECIFIER}', skipping the Sonar upload"
+            // Main is analysed by the nightly QA jobs, so skip the Sonar goal in every Maven invocation here.
+            if (jobIsQAGeneric) {
+              echo '### [cicdPipeline] - QA-GENERIC detected, skipping the Sonar upload'
               wrapperEnvs['MAVEN_ARGS'] = '-Dsonar.skip=true'
             }
 
