@@ -70,6 +70,13 @@ def call(Map config = [:], Closure body) {
               wrapperEnvs['FLAGS'] = qaFlags
             }
 
+            // QA-GENERIC can run any branch, but Sonar stores every upload as the main branch analysis.
+            // Main is analysed by the nightly QA jobs, so skip the Sonar goal in every Maven invocation here.
+            if (jobIsQAGeneric) {
+              echo '### [cicdPipeline] - QA-GENERIC detected, skipping the Sonar upload'
+              wrapperEnvs['MAVEN_ARGS'] = "${env.MAVEN_ARGS ?: ''} -Dsonar.skip=true".trim()
+            }
+
             // Set Docker registry environment vars as last step if it's a build job.
             // Needed when the scripts in 'docker/images/' are used in the pipeline, which should always be the case for a build job.
             // Apart from convenience, this also makes sure that if these - for whatever arbitrary reason - get
