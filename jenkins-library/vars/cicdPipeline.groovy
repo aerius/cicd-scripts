@@ -74,7 +74,7 @@ def call(Map config = [:], Closure body) {
             // Main is analysed by the nightly QA jobs, so skip the Sonar goal in every Maven invocation here.
             if (jobIsQAGeneric) {
               echo '### [cicdPipeline] - QA-GENERIC detected, skipping the Sonar upload'
-              wrapperEnvs['MAVEN_ARGS'] = '-Dsonar.skip=true'
+              wrapperEnvs['MAVEN_ARGS'] = "${env.MAVEN_ARGS ?: ''} -Dsonar.skip=true".trim()
             }
 
             // Set Docker registry environment vars as last step if it's a build job.
