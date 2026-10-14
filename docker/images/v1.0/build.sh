@@ -64,10 +64,8 @@ CICD_BUILDX_BAKE_EXTRA_ARGS=()
 [[ "${CICD_SUPPLY_HTTPS_DATA}" == 'true' ]] && [[ "${COMPOSE_CONTAINS_DB_SERVICE}" == 'true' ]] && CICD_BUILDX_BAKE_EXTRA_ARGS+=('--set' 'database*.args.HTTPS_DATA_USERNAME='"${HTTPS_DATA_USERNAME}" '--set' 'database*.args.HTTPS_DATA_PASSWORD='"${HTTPS_DATA_PASSWORD}")
 # When pushing, build with a docker-container builder: the default docker builder pushes through the Docker daemon,
 # which gzips every layer on a single core and ignores compression options
-if [[ "${1}" != '--no-push' && -n "${AERIUS_REGISTRY_URL}" ]]; then
-  docker buildx inspect cicd-push &>/dev/null || docker buildx create --name cicd-push --driver docker-container
-  CICD_BUILDX_BAKE_EXTRA_ARGS+=('--builder' 'cicd-push')
-fi
+docker buildx inspect cicd-push &>/dev/null || docker buildx create --name cicd-push --driver docker-container
+[[ "${1}" != '--no-push' && -n "${AERIUS_REGISTRY_URL}" ]] && CICD_BUILDX_BAKE_EXTRA_ARGS+=('--builder' 'cicd-push')
 docker buildx bake -f "${DOCKER_COMPOSE_PATH}" ${CICD_BUILDX_BAKE_EXTRA_ARGS[@]} --print
 docker buildx bake -f "${DOCKER_COMPOSE_PATH}" ${CICD_BUILDX_BAKE_EXTRA_ARGS[@]}
 
@@ -76,4 +74,11 @@ if [[ "${1}" != '--no-push' && -n "${AERIUS_REGISTRY_URL}" ]]; then
   _cicd_log '# Pushing images'
   docker buildx bake -f "${DOCKER_COMPOSE_PATH}" ${CICD_BUILDX_BAKE_EXTRA_ARGS[@]} --set '*.output=type=registry,compression=zstd,compression-level=3,force-compression=true'
   _cicd_log '# Finished pushing images'
+
+  _cicd_log '# Compressed size of the pushed images'
+  for IMAGE in $("${CICD_SCRIPTS_TOOLS_DIR}"/yq '.services[] | select(has("build")) | .image' "${DOCKER_COMPOSE_PATH}"); do
+    DIGEST=$(docker buildx imagetools inspect --raw "${IMAGE}" | "${CICD_SCRIPTS_TOOLS_DIR}"/yq -p json '.manifests[] | select(.platform.os != "unknown") | .digest' | head -1)
+    SIZE_MB=$(docker buildx imagetools inspect --raw "${IMAGE}${DIGEST:+@${DIGEST}}" | "${CICD_SCRIPTS_TOOLS_DIR}"/yq -p json '.layers[].size' | awk '{ sum += $1 } END { print int(sum / 1000000) }')
+    echo "${IMAGE}: ${SIZE_MB} MB"
+  done
 fi
