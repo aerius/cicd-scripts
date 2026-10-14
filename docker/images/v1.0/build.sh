@@ -63,14 +63,15 @@ _cicd_log '# Building images'
 CICD_BUILDX_BAKE_EXTRA_ARGS=()
 [[ "${CICD_SUPPLY_HTTPS_DATA}" == 'true' ]] && [[ "${COMPOSE_CONTAINS_DB_SERVICE}" == 'true' ]] && CICD_BUILDX_BAKE_EXTRA_ARGS+=('--set' 'database*.args.HTTPS_DATA_USERNAME='"${HTTPS_DATA_USERNAME}" '--set' 'database*.args.HTTPS_DATA_PASSWORD='"${HTTPS_DATA_PASSWORD}")
 docker buildx bake -f "${DOCKER_COMPOSE_PATH}" ${CICD_BUILDX_BAKE_EXTRA_ARGS[@]} --print
-docker buildx bake -f "${DOCKER_COMPOSE_PATH}" ${CICD_BUILDX_BAKE_EXTRA_ARGS[@]}
 
 # Only push if --no-push isn't provided and a registry URL is set
 if [[ "${1}" != '--no-push' && -n "${AERIUS_REGISTRY_URL}" ]]; then
-  _cicd_log '# List local images to show container image size'
-  docker images | grep -F -e "${AERIUS_REGISTRY_URL}" -e REPOSITORY
-
-  _cicd_log '# Pushing images'
-  docker buildx bake -f "${DOCKER_COMPOSE_PATH}" ${CICD_BUILDX_BAKE_EXTRA_ARGS[@]} --push
-  _cicd_log '# Finished pushing images'
+  # The default docker builder pushes through the Docker daemon, which compresses every layer with single-threaded gzip
+  # and ignores compression options. A docker-container builder pushes itself and can use zstd.
+  docker buildx inspect cicd-push &>/dev/null || docker buildx create --name cicd-push --driver docker-container
+  docker buildx bake --builder cicd-push -f "${DOCKER_COMPOSE_PATH}" ${CICD_BUILDX_BAKE_EXTRA_ARGS[@]} \
+    --set '*.output=type=registry,compression=zstd,compression-level=3,force-compression=true'
+  _cicd_log '# Finished building and pushing images'
+else
+  docker buildx bake -f "${DOCKER_COMPOSE_PATH}" ${CICD_BUILDX_BAKE_EXTRA_ARGS[@]}
 fi
