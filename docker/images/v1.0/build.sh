@@ -62,10 +62,12 @@ grep -F -e '  database' "${DOCKER_COMPOSE_PATH}" | grep -e ':$' &>/dev/null && C
 _cicd_log '# Building images'
 CICD_BUILDX_BAKE_EXTRA_ARGS=()
 [[ "${CICD_SUPPLY_HTTPS_DATA}" == 'true' ]] && [[ "${COMPOSE_CONTAINS_DB_SERVICE}" == 'true' ]] && CICD_BUILDX_BAKE_EXTRA_ARGS+=('--set' 'database*.args.HTTPS_DATA_USERNAME='"${HTTPS_DATA_USERNAME}" '--set' 'database*.args.HTTPS_DATA_PASSWORD='"${HTTPS_DATA_PASSWORD}")
+
 # When pushing, build with a docker-container builder: the default docker builder pushes through the Docker daemon,
 # which gzips every layer on a single core and ignores compression options
 docker buildx inspect cicd-push &>/dev/null || docker buildx create --name cicd-push --driver docker-container
 [[ "${1}" != '--no-push' && -n "${AERIUS_REGISTRY_URL}" ]] && CICD_BUILDX_BAKE_EXTRA_ARGS+=('--builder' 'cicd-push')
+
 docker buildx bake -f "${DOCKER_COMPOSE_PATH}" ${CICD_BUILDX_BAKE_EXTRA_ARGS[@]} --print
 docker buildx bake -f "${DOCKER_COMPOSE_PATH}" ${CICD_BUILDX_BAKE_EXTRA_ARGS[@]}
 
