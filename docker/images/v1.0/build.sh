@@ -76,11 +76,4 @@ if [[ "${1}" != '--no-push' && -n "${AERIUS_REGISTRY_URL}" ]]; then
   _cicd_log '# Pushing images'
   docker buildx bake -f "${DOCKER_COMPOSE_PATH}" ${CICD_BUILDX_BAKE_EXTRA_ARGS[@]} --set '*.output=type=registry,compression=zstd,compression-level=3,force-compression=true'
   _cicd_log '# Finished pushing images'
-
-  _cicd_log '# Compressed size of the pushed images'
-  for IMAGE in $("${CICD_SCRIPTS_TOOLS_DIR}"/yq '.services[] | select(has("build")) | .image' "${DOCKER_COMPOSE_PATH}"); do
-    DIGEST=$(docker buildx imagetools inspect --raw "${IMAGE}" | "${CICD_SCRIPTS_TOOLS_DIR}"/yq -p json '.manifests[] | select(.platform.os != "unknown") | .digest' | head -1)
-    SIZE_MB=$(docker buildx imagetools inspect --raw "${IMAGE}${DIGEST:+@${DIGEST}}" | "${CICD_SCRIPTS_TOOLS_DIR}"/yq -p json '.layers[].size' | awk '{ sum += $1 } END { print int(sum / 1000000) }')
-    echo "${IMAGE}: ${SIZE_MB} MB"
-  done
 fi
