@@ -65,7 +65,7 @@ CICD_BUILDX_BAKE_EXTRA_ARGS=()
 
 # When pushing, build with a docker-container builder: the default docker builder pushes through the Docker daemon,
 # which gzips every layer on a single core and ignores compression options
-docker buildx inspect cicd-push &>/dev/null || docker buildx create --name cicd-push --driver docker-container
+docker buildx inspect cicd-push &>/dev/null || docker buildx create --name cicd-push --driver docker-container --buildkitd-flags '--oci-worker-net bridge'
 [[ "${1}" != '--no-push' && -n "${AERIUS_REGISTRY_URL}" ]] && CICD_BUILDX_BAKE_EXTRA_ARGS+=('--builder' 'cicd-push')
 
 docker buildx bake -f "${DOCKER_COMPOSE_PATH}" ${CICD_BUILDX_BAKE_EXTRA_ARGS[@]} --print
