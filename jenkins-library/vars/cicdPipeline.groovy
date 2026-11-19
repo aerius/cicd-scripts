@@ -56,7 +56,7 @@ def call(Map config = [:], Closure body) {
             }
 
             // For QA jobs also handle qaFlags block (similarly to deployFlags)
-            if (jobIsQA && config.qaFlags && config.qaFlags instanceof Map) {
+            if (jobIsQA && config.qaFlags instanceof Map) {
               def primaryServiceTheme = env.SERVICE_THEME.tokenize(',')[0]
               def qaFlags = ''
 
